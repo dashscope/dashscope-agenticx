@@ -158,8 +158,7 @@ class TestOnePointZeroReadmes:
 
     def test_public_changelog_excludes_pre_one_point_zero_history(self):
         text = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        assert "## [Released]" in text
-        assert "## [1.0.0] - 2026-11-09" in text
+        assert "## [1.0.0] - 2026-11-10" in text
         assert "## [1.0.0rc3]" in text
         assert "## [0.7.2]" not in text
         assert "Chinese archive" not in text

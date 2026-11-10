@@ -26,6 +26,8 @@ def is_available() -> tuple[bool, str]:
             "Voice input requires dependencies: "
             "pip install dashscope-agenticx[voice]"
         )
+    except Exception:
+        return False, "Voice input audio backend failed to initialize."
 
 
 SAMPLE_RATE = 16000

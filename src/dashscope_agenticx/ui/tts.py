@@ -112,6 +112,8 @@ def is_available() -> tuple[bool, str]:
             "Voice output requires dependencies: "
             "pip install dashscope-agenticx[voice]"
         )
+    except Exception:
+        return False, "Voice output audio backend failed to initialize."
 
 
 def _strip_markdown(text: str) -> str:

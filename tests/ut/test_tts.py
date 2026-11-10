@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import sys
+from types import ModuleType
 
 import pytest
 
@@ -17,6 +18,11 @@ from dashscope_agenticx.ui.tts import (
     is_available,
     speak_text,
 )
+
+
+@pytest.fixture(autouse=True)
+def mocked_sounddevice(monkeypatch):
+    monkeypatch.setitem(sys.modules, "sounddevice", ModuleType("sounddevice"))
 
 
 class TestIsAvailable:
@@ -36,6 +42,24 @@ class TestIsAvailable:
         ok, err = is_available()
         assert ok is False
         assert "agenticx[voice]" in err
+
+    @pytest.mark.parametrize("error_type", [OSError, Exception])
+    def test_audio_backend_initialization_failure(
+        self, monkeypatch, error_type
+    ):
+        import builtins
+
+        original_import = builtins.__import__
+
+        def failing_import(name, *args, **kwargs):
+            if name == "sounddevice":
+                raise error_type("audio backend unavailable")
+            return original_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", failing_import)
+        ok, err = is_available()
+        assert ok is False
+        assert "audio backend" in err
 
 
 class TestStripMarkdown:
