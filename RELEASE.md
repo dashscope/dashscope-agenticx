@@ -16,3 +16,12 @@ publication requires the checks and explicit approval below.
 6. Only when external publication is explicitly approved, tag `v<version>` and
    publish the `dashscope-agenticx` wheel/sdist plus checksums and SBOM.
 7. Archive the migration guide and final benchmark/eval reports for `1.0.0`.
+
+Main-branch pushes and pull requests run unit tests and pre-commit checks.
+Before pushing a release tag, confirm the tagged source passed those checks.
+The tag workflow builds Python distributions and platform binaries, smoke
+tests the binaries, and uploads assets plus SHA-256 checksums to a draft
+GitHub Release. Use the version's CHANGELOG entry as its release notes and
+publish the draft only after reviewing the build results and assets.
+Publishing a GitHub Release does not upload the Python package to PyPI;
+PyPI publication is a separate, explicitly authorized step.

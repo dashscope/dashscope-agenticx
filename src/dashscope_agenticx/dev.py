@@ -411,7 +411,6 @@ _GUIDES = {
 # ===== Runtime: extension provider / capability management =====
 
 import getpass  # noqa: E402
-import os  # noqa: E402
 
 
 def _prompt(label: str, default: str = "", secret: bool = False) -> str:
@@ -471,14 +470,28 @@ def _hot_reload(config: Config | None = None) -> None:
         refresh_extension_capability_tools(config)
 
 
-def _provider_add(config: Config, *, name: str = "", show_usage: bool = True, context=None):
+def _provider_add(
+    config: Config,
+    *,
+    name: str = "",
+    show_usage: bool = True,
+    context=None,
+):
     """Register a provider using the shared model and credential steps."""
     import re
 
     from dashscope_agenticx.cli.handlers_provider import _wizard_key_step
-    from dashscope_agenticx.cli.wizard import WizardContext, WizardResult, read_choice, valid_api_url
+    from dashscope_agenticx.cli.wizard import (
+        WizardContext,
+        WizardResult,
+        read_choice,
+        valid_api_url,
+    )
     from dashscope_agenticx.extensions import (
-        CustomProvider, WORKSPACE_EXTENSIONS_FILE, append_provider, load_extensions,
+        CustomProvider,
+        WORKSPACE_EXTENSIONS_FILE,
+        append_provider,
+        load_extensions,
     )
 
     context = context or WizardContext()
@@ -488,16 +501,29 @@ def _provider_add(config: Config, *, name: str = "", show_usage: bool = True, co
         console.print("[dim]Cancelled[/dim]")
         return WizardResult("cancelled")
     if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", name):
-        console.print("[yellow]Use letters, digits, hyphens or underscores for the provider name.[/yellow]")
+        console.print(
+            "[yellow]Use letters, digits, hyphens or underscores "
+            "for the provider name.[/yellow]",
+        )
         return WizardResult("failed", name)
-    if name in PROVIDER_MODELS or any(provider.name == name for provider in load_extensions().providers):
-        console.print(f"[yellow]Name conflict: {name} already exists.[/yellow]")
+    if name in PROVIDER_MODELS or any(
+        provider.name == name for provider in load_extensions().providers
+    ):
+        console.print(
+            f"[yellow]Name conflict: {name} already exists.[/yellow]",
+        )
         return WizardResult("failed", name)
     while True:
-        protocol = read_choice("Protocol (openai/anthropic/dashscope) [openai]: ", "openai").lower()
+        protocol = read_choice(
+            "Protocol (openai/anthropic/dashscope) [openai]: ",
+            "openai",
+        ).lower()
         if protocol in ("openai", "anthropic", "dashscope"):
             break
-        console.print("[yellow]Protocol must be openai / anthropic / dashscope.[/yellow]")
+        console.print(
+            "[yellow]Protocol must be openai / anthropic / dashscope."
+            "[/yellow]",
+        )
     while True:
         base_url = read_choice("  API base URL: ")
         if not base_url:
@@ -505,29 +531,47 @@ def _provider_add(config: Config, *, name: str = "", show_usage: bool = True, co
             return WizardResult("cancelled", name)
         if valid_api_url(base_url):
             break
-        console.print("[yellow]Enter an absolute HTTP(S) API URL without credentials or query parameters.[/yellow]")
+        console.print(
+            "[yellow]Enter an absolute HTTP(S) API URL "
+            "without credentials or query parameters.[/yellow]",
+        )
     default_model = normalize_model_name(read_choice("  Default model: "))
     if not default_model:
         console.print("[dim]No default model entered; cancelled.[/dim]")
         return WizardResult("cancelled", name)
-    advanced = read_choice("Advanced options? [y/N]: ", "n").lower() in ("y", "yes")
+    advanced = read_choice("Advanced options? [y/N]: ", "n").lower() in (
+        "y",
+        "yes",
+    )
     models = []
     if advanced:
-        models_raw = read_choice("  Other models (comma-separated; Enter skips): ")
+        models_raw = read_choice(
+            "  Other models (comma-separated; Enter skips): ",
+        )
         for value in models_raw.split(","):
             model = normalize_model_name(value.strip())
             if model and model != default_model and model not in models:
                 models.append(model)
     provider = CustomProvider(
-        name=name, base_url=base_url, default_model=default_model,
-        models=models, protocol=protocol,
+        name=name,
+        base_url=base_url,
+        default_model=default_model,
+        models=models,
+        protocol=protocol,
     )
-    credentials = _wizard_key_step(config, context=context, new_provider=provider)
+    credentials = _wizard_key_step(
+        config,
+        context=context,
+        new_provider=provider,
+    )
     if not credentials.handled:
         return credentials
     target = (
         _choose_target(default_global=not context.setup)
-        if advanced else WORKSPACE_EXTENSIONS_FILE if context.setup else _choose_target()
+        if advanced
+        else WORKSPACE_EXTENSIONS_FILE
+        if context.setup
+        else _choose_target()
     )
     append_provider(target, provider)
     _hot_reload()

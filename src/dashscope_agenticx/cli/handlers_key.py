@@ -178,7 +178,10 @@ def ensure_provider_key(config: Config, agent) -> bool:
 
 
 def _set_extension_cap_token(
-    cap_key: str, direct_value: str = "", *, announce: bool = True,
+    cap_key: str,
+    direct_value: str = "",
+    *,
+    announce: bool = True,
 ) -> bool:
     """Encrypt + persist a token into the [[capabilities]] block of
     custom-extensions.toml. If `direct_value` is empty, prompts (no echo).
@@ -234,7 +237,7 @@ def _set_extension_cap_token(
         return False
     apply_extensions(PROVIDER_MODELS)
     if announce:
-        console.print(f"[green]✓ Credential saved in OS keyring[/green]")
+        console.print("[green]✓ Credential saved in OS keyring[/green]")
     return True
 
 
@@ -273,12 +276,18 @@ def _set_extension_provider_token(
         config.save_global()
     if announce:
         console.print(
-            f"[green]✓ {ext_prov.name}_api_key saved in the OS keyring[/green]",
+            f"[green]✓ {ext_prov.name}_api_key "
+            "saved in the OS keyring[/green]",
         )
     return True
 
 
-def _maybe_prompt_extension_token(cap_key: str, config=None, *, context=None) -> bool:
+def _maybe_prompt_extension_token(
+    cap_key: str,
+    config=None,
+    *,
+    context=None,
+) -> bool:
     """Resolve or collect a capability credential without repeating prompts."""
     import os
 
@@ -286,8 +295,12 @@ def _maybe_prompt_extension_token(cap_key: str, config=None, *, context=None) ->
     from pathlib import Path
 
     from dashscope_agenticx.extensions import (
-        GLOBAL_EXTENSIONS_FILE, apply_extensions, auth_env_name,
-        find_capability, provider_key_for_env, set_capability_secret,
+        GLOBAL_EXTENSIONS_FILE,
+        apply_extensions,
+        auth_env_name,
+        find_capability,
+        provider_key_for_env,
+        set_capability_secret,
     )
     from dashscope_agenticx.utils.secret_store import resolve_secret
 
@@ -298,7 +311,9 @@ def _maybe_prompt_extension_token(cap_key: str, config=None, *, context=None) ->
     env_name = cap.api_key_env or auth_env_name(cap.auth)
     if not env_name:
         return True
-    if os.environ.get(env_name) or (cap.api_key_enc and resolve_secret(cap.api_key_enc)):
+    if os.environ.get(env_name) or (
+        cap.api_key_enc and resolve_secret(cap.api_key_enc)
+    ):
         return True
     if provider_key_for_env(config, env_name, KEY_TARGETS):
         return True
@@ -306,7 +321,10 @@ def _maybe_prompt_extension_token(cap_key: str, config=None, *, context=None) ->
     if reference:
         target = Path(cap.source) if cap.source else GLOBAL_EXTENSIONS_FILE
         if not set_capability_secret(target, cap_key, api_key_enc=reference):
-            console.print(f"[red]Write failed: credential for {cap_key} was not saved.[/red]")
+            console.print(
+                f"[red]Write failed: credential for {cap_key} "
+                "was not saved.[/red]",
+            )
             return False
         apply_extensions(PROVIDER_MODELS)
         return True
@@ -316,13 +334,25 @@ def _maybe_prompt_extension_token(cap_key: str, config=None, *, context=None) ->
     if not context.prompt_missing_credentials:
         context.deferred_credentials.add(env_name)
         return False
-    console.print(f"[yellow]{cap_key}: credential needed ({env_name}).[/yellow]")
+    console.print(
+        f"[yellow]{cap_key}: credential needed ({env_name}).[/yellow]",
+    )
     if context.setup:
         secret = read_secret(f"{env_name} [Enter to skip]: ")
-        ready = bool(secret) and _set_extension_cap_token(cap_key, direct_value=secret, announce=False)
+        ready = bool(secret) and _set_extension_cap_token(
+            cap_key,
+            direct_value=secret,
+            announce=False,
+        )
     else:
-        choice = input("Enter it now? (saved in OS keyring) [Y/n]: ").strip().lower()
-        ready = choice in ("", "y", "yes") and _set_extension_cap_token(cap_key)
+        choice = (
+            input("Enter it now? (saved in OS keyring) [Y/n]: ")
+            .strip()
+            .lower()
+        )
+        ready = choice in ("", "y", "yes") and _set_extension_cap_token(
+            cap_key,
+        )
     if not ready:
         context.deferred_credentials.add(env_name)
     else:

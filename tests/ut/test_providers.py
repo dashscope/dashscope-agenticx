@@ -51,7 +51,10 @@ class _MockResponse:
 
 
 class TestOpenAIProvider:
-    @pytest.mark.parametrize("provider_class", [OpenAIProvider, AnthropicProvider, TongyiProvider])
+    @pytest.mark.parametrize(
+        "provider_class",
+        [OpenAIProvider, AnthropicProvider, TongyiProvider],
+    )
     def test_model_name_normalized_before_requests(self, provider_class):
         provider = provider_class(model=" My-MODEL ", api_key="sk-test")
         assert provider.model == "my-model"
@@ -1180,17 +1183,21 @@ class TestProviderFactory:
         assert chain.profiles[0].provider == "tongyi"
 
     def test_get_provider_chain_has_no_default_gateway_warning(
-        self, monkeypatch, capsys,
+        self,
+        monkeypatch,
+        capsys,
     ):
         from dashscope_agenticx.config import Config
         from dashscope_agenticx.extensions import CustomExtensions
 
         monkeypatch.delenv("AGENTICX_DISABLE_GATEWAY_WARNING", raising=False)
         monkeypatch.setattr(
-            "dashscope_agenticx.providers.profile._LEGACY_GATEWAY_WARNED", set(),
+            "dashscope_agenticx.providers.profile._LEGACY_GATEWAY_WARNED",
+            set(),
         )
         monkeypatch.setattr(
-            "dashscope_agenticx.extensions._current", CustomExtensions(),
+            "dashscope_agenticx.extensions._current",
+            CustomExtensions(),
         )
         chain = get_provider_chain(Config(tongyi_api_key="sk-test"))
 

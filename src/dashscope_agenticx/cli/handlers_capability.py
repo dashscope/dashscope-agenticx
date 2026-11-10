@@ -105,9 +105,18 @@ def _require_capability(config: Config, cap_key: str) -> bool:
     return False
 
 
-def _prompt_missing_config(config: Config, requires: list[str], *, context=None):
+def _prompt_missing_config(
+    config: Config,
+    requires: list[str],
+    *,
+    context=None,
+):
     """Collect required fields once, sharing the setup credential state."""
-    from dashscope_agenticx.cli.wizard import WizardContext, read_choice, read_secret
+    from dashscope_agenticx.cli.wizard import (
+        WizardContext,
+        read_choice,
+        read_secret,
+    )
     from dashscope_agenticx.utils.sanitizer import is_secret_field
 
     context = context or WizardContext()
@@ -124,7 +133,11 @@ def _prompt_missing_config(config: Config, requires: list[str], *, context=None)
             ready = False
             continue
         prompt = f"{field_name} [Enter to skip]: "
-        value = read_secret(prompt) if is_secret_field(field_name) else read_choice(prompt)
+        value = (
+            read_secret(prompt)
+            if is_secret_field(field_name)
+            else read_choice(prompt)
+        )
         if value:
             setattr(config, field_name, value)
         else:
@@ -135,10 +148,15 @@ def _prompt_missing_config(config: Config, requires: list[str], *, context=None)
 
 def _enable_capability(config: Config, cap_key: str, *, context=None):
     """Shared credential checks and activation for a selected capability."""
-    from dashscope_agenticx.cli.handlers_key import _maybe_prompt_extension_token
+    from dashscope_agenticx.cli.handlers_key import (
+        _maybe_prompt_extension_token,
+    )
     from dashscope_agenticx.cli.mcp import _connect_mcp
     from dashscope_agenticx.cli.wizard import WizardContext, WizardResult
-    from dashscope_agenticx.tools.platform import register_one_capability, unregister_capability_tools
+    from dashscope_agenticx.tools.platform import (
+        register_one_capability,
+        unregister_capability_tools,
+    )
 
     context = context or WizardContext()
     if cap_key not in ALL_CAPABILITY_KEYS:
@@ -151,16 +169,24 @@ def _enable_capability(config: Config, cap_key: str, *, context=None):
         config.enabled_capabilities = []
     already = cap_key in config.enabled_capabilities
     info = next(cap for cap in CAPABILITY_CATALOG if cap["key"] == cap_key)
-    missing = [field for field in info["requires"] if not getattr(config, field, "")]
+    missing = [
+        field for field in info["requires"] if not getattr(config, field, "")
+    ]
     ready = True
     if missing:
         if context.prompt_missing_credentials:
             console.print(f"[yellow]{cap_key}: configuration needed.[/yellow]")
-        ready = (_prompt_missing_config(config, info["requires"], context=context)
-                 if context.setup else _prompt_missing_config(config, info["requires"]))
+        ready = (
+            _prompt_missing_config(config, info["requires"], context=context)
+            if context.setup
+            else _prompt_missing_config(config, info["requires"])
+        )
     if ready:
-        token_ready = (_maybe_prompt_extension_token(cap_key, config, context=context)
-                       if context.setup else _maybe_prompt_extension_token(cap_key, config))
+        token_ready = (
+            _maybe_prompt_extension_token(cap_key, config, context=context)
+            if context.setup
+            else _maybe_prompt_extension_token(cap_key, config)
+        )
         ready = token_ready is not False
     if not ready:
         context.pending_capabilities.add(cap_key)
@@ -176,8 +202,14 @@ def _enable_capability(config: Config, cap_key: str, *, context=None):
         return WizardResult("completed", cap_key)
     config.save_workspace()
     unregister_capability_tools(cap_key)
-    added = register_one_capability(config, cap_key, connect_mcp_fn=_connect_mcp)
-    suffix = f" ({added} tools registered)" if added else " (no tools registered)"
+    added = register_one_capability(
+        config,
+        cap_key,
+        connect_mcp_fn=_connect_mcp,
+    )
+    suffix = (
+        f" ({added} tools registered)" if added else " (no tools registered)"
+    )
     console.print(f"[green]✓ Enabled: {cap_key}[/green]{suffix}")
     return WizardResult("completed", cap_key)
 
@@ -190,7 +222,14 @@ def _configure_capabilities(config: Config, *, context, use_defaults=False):
     else:
         current = config.enabled_capabilities or []
         options = [cap["key"] for cap in CAPABILITY_CATALOG]
-        default = ",".join(str(options.index(key) + 1) for key in current if key in options) or "0"
+        default = (
+            ",".join(
+                str(options.index(key) + 1)
+                for key in current
+                if key in options
+            )
+            or "0"
+        )
         console.print("\n[bold]Capabilities (optional)[/bold]")
         console.print("  [0] None")
         for index, cap in enumerate(CAPABILITY_CATALOG, 1):
@@ -203,7 +242,11 @@ def _configure_capabilities(config: Config, *, context, use_defaults=False):
             selected = []
             valid = True
             for value in choice.replace(",", " ").split():
-                key = options[int(value) - 1] if value.isdigit() and 1 <= int(value) <= len(options) else value
+                key = (
+                    options[int(value) - 1]
+                    if value.isdigit() and 1 <= int(value) <= len(options)
+                    else value
+                )
                 if key not in options:
                     valid = False
                     break
@@ -211,18 +254,38 @@ def _configure_capabilities(config: Config, *, context, use_defaults=False):
                     selected.append(key)
             if valid:
                 break
-            console.print("[yellow]Choose listed capability numbers or names; 0 selects none.[/yellow]")
+            console.print(
+                "[yellow]Choose listed capability numbers or names; "
+                "0 selects none.[/yellow]",
+            )
     config.enabled_capabilities = []
     for key in selected:
         result = _enable_capability(config, key, context=context)
         context.results.append(result)
-    return WizardResult("deferred" if context.pending_capabilities else "completed", "capabilities")
+    return WizardResult(
+        "deferred" if context.pending_capabilities else "completed",
+        "capabilities",
+    )
 
 
-def _handle_capability_command(cmd: str, config: Config, *, context=None, use_defaults=False):
+def _handle_capability_command(
+    cmd: str,
+    config: Config,
+    *,
+    context=None,
+    use_defaults=False,
+):
     """Handle /capability command — list/enable/disable capabilities."""
     if context is not None and context.setup:
-        return _configure_capabilities(config, context=context, use_defaults=use_defaults)
+        return _configure_capabilities(
+            config,
+            context=context,
+            use_defaults=use_defaults,
+        )
+    return _dispatch_capability_command(cmd, config)
+
+
+def _dispatch_capability_command(cmd: str, config: Config):
     parts = cmd.strip().split()
     sub = parts[1] if len(parts) > 1 else ""
 

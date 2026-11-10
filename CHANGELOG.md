@@ -5,15 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Released]
-
-## [1.0.0] - 2026-11-09
+## [1.0.0] - 2026-11-10
 
 ### Added
 
 - TUI transcript blocks for Markdown replies, numbered turns, collapsible tool
   output, and expanded per-turn/session statistics.
 - Tool-result truncation metadata and prompt-composition/usage-call details.
+- Main-branch pushes and pull requests run the full unit-test matrix and
+  repository-wide pre-commit checks.
+- Tag builds prepare Python wheel/source distributions and platform binaries
+  with SHA-256 checksums in a draft GitHub Release for final review.
 
 ### Changed
 
@@ -58,6 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of a shared predictable log path.
 - Release security jobs install and audit the built Runtime, including its
   optional dependencies, and retain audit reports alongside environment SBOMs.
+- Python 3.10 audit environments upgrade their bootstrap setuptools instead
+  of retaining the runner's vulnerable version. Linux unit-test runners
+  install PortAudio so voice degradation tests exercise their intended paths.
 - Dependency requirements exclude the security scan's affected Runtime
   versions. Pillow-backed vision/media require Python 3.11+; Python 3.10
   retains base Runtime support and the `all` extra omits Pillow on that version.

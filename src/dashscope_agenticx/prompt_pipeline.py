@@ -264,8 +264,12 @@ class PromptPipeline:
     def stable_prefix(self) -> str:
         return self._assembly.stable_prefix
 
-    def update_base_prompt(self, base_prompt: str, project_instructions: str | None = None) -> None:
-        """Refresh workspace instructions while preserving registered sections."""
+    def update_base_prompt(
+        self,
+        base_prompt: str,
+        project_instructions: str | None = None,
+    ) -> None:
+        """Refresh workspace instructions and preserve registered sections."""
         self._assembly = PromptAssembly(
             base_prompt=base_prompt,
             project_instructions=project_instructions,

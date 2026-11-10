@@ -100,26 +100,68 @@ class TestStartupKeyWizard:
 
 
 class TestProviderWizard:
-    def test_setup_advanced_endpoint_and_protocol_are_validated(self, captured, monkeypatch):
+    def test_setup_advanced_endpoint_and_protocol_are_validated(
+        self,
+        captured,
+        monkeypatch,
+    ):
         from dashscope_agenticx.cli.wizard import WizardContext, WizardResult
 
         config = Config(provider="tongyi", model="qwen3.8-max")
-        answers = iter(["anthropic", "", "y", "not-an-endpoint", "https://custom.example/v1", "invalid", "anthropic"])
+        answers = iter(
+            [
+                "anthropic",
+                "",
+                "y",
+                "not-an-endpoint",
+                "https://custom.example/v1",
+                "invalid",
+                "anthropic",
+            ],
+        )
         monkeypatch.setattr("builtins.input", lambda prompt: next(answers))
-        monkeypatch.setattr(handlers_provider, "PROVIDER_MODELS", {"tongyi": ["qwen3.8-max"], "anthropic": ["claude-test"]})
-        monkeypatch.setattr(handlers_provider, "_wizard_key_step", lambda *args, **kwargs: WizardResult("completed"))
+        monkeypatch.setattr(
+            handlers_provider,
+            "PROVIDER_MODELS",
+            {"tongyi": ["qwen3.8-max"], "anthropic": ["claude-test"]},
+        )
+        monkeypatch.setattr(
+            handlers_provider,
+            "_wizard_key_step",
+            lambda *args, **kwargs: WizardResult("completed"),
+        )
 
-        result = handlers_provider._provider_wizard(MagicMock(), config, context=WizardContext(setup=True))
+        result = handlers_provider._provider_wizard(
+            MagicMock(),
+            config,
+            context=WizardContext(setup=True),
+        )
 
         assert result.handled
-        assert (config.provider, config.model, config.protocol, config.base_url) == (
-            "anthropic", "claude-test", "anthropic", "https://custom.example/v1",
+        assert (
+            config.provider,
+            config.model,
+            config.protocol,
+            config.base_url,
+        ) == (
+            "anthropic",
+            "claude-test",
+            "anthropic",
+            "https://custom.example/v1",
         )
         assert "absolute HTTP(S)" in captured.getvalue()
         assert "Choose openai, anthropic or dashscope" in captured.getvalue()
 
-    def test_cancellation_restores_standalone_config(self, captured, monkeypatch):
-        config = Config(provider="tongyi", model="qwen3.8-max", base_url="https://old.example/v1")
+    def test_cancellation_restores_standalone_config(
+        self,
+        captured,
+        monkeypatch,
+    ):
+        config = Config(
+            provider="tongyi",
+            model="qwen3.8-max",
+            base_url="https://old.example/v1",
+        )
         answers = iter(["anthropic"])
 
         def read_input(prompt):
@@ -129,24 +171,59 @@ class TestProviderWizard:
                 raise EOFError
 
         monkeypatch.setattr("builtins.input", read_input)
-        monkeypatch.setattr(handlers_provider, "PROVIDER_MODELS", {"tongyi": ["qwen3.8-max"], "anthropic": ["claude-test"]})
+        monkeypatch.setattr(
+            handlers_provider,
+            "PROVIDER_MODELS",
+            {"tongyi": ["qwen3.8-max"], "anthropic": ["claude-test"]},
+        )
         saved = []
         config.save_workspace = lambda: saved.append(True)
         config.save_global = lambda: saved.append(True)
         assert handlers_provider._provider_wizard(MagicMock(), config)
-        assert (config.provider, config.model, config.base_url) == ("tongyi", "qwen3.8-max", "https://old.example/v1")
+        assert (config.provider, config.model, config.base_url) == (
+            "tongyi",
+            "qwen3.8-max",
+            "https://old.example/v1",
+        )
         assert not saved
 
-    def test_extension_key_write_failure_is_not_completed(self, captured, monkeypatch):
+    def test_extension_key_write_failure_is_not_completed(
+        self,
+        captured,
+        monkeypatch,
+    ):
         from dashscope_agenticx.cli.wizard import WizardContext
-        from dashscope_agenticx.extensions import CustomExtensions, CustomProvider
+        from dashscope_agenticx.extensions import (
+            CustomExtensions,
+            CustomProvider,
+        )
 
-        provider = CustomProvider(name="failure-provider", base_url="https://local.example/v1")
-        monkeypatch.setattr("dashscope_agenticx.extensions._current", CustomExtensions(providers=[provider]))
+        provider = CustomProvider(
+            name="failure-provider",
+            base_url="https://local.example/v1",
+        )
+        monkeypatch.setattr(
+            "dashscope_agenticx.extensions._current",
+            CustomExtensions(providers=[provider]),
+        )
         monkeypatch.setattr("builtins.input", lambda prompt: "1")
-        monkeypatch.setattr(handlers_provider, "_read_secret", lambda prompt: "sk-test")
-        monkeypatch.setattr(handlers_key, "_set_extension_provider_token", lambda *args, **kwargs: False)
-        assert handlers_provider._wizard_key_step(Config(provider="failure-provider"), context=WizardContext(setup=True)).status == "failed"
+        monkeypatch.setattr(
+            handlers_provider,
+            "_read_secret",
+            lambda prompt: "sk-test",
+        )
+        monkeypatch.setattr(
+            handlers_key,
+            "_set_extension_provider_token",
+            lambda *args, **kwargs: False,
+        )
+        assert (
+            handlers_provider._wizard_key_step(
+                Config(provider="failure-provider"),
+                context=WizardContext(setup=True),
+            ).status
+            == "failed"
+        )
 
     def test_unavailable_provider_is_not_the_enter_default(self, captured):
         cfg = _config("zhipu")
@@ -218,35 +295,101 @@ class TestProviderWizard:
 
 
 class TestModelCommand:
-    def test_shortlist_limits_each_modality_and_retains_current_model(self, monkeypatch):
+    def test_shortlist_limits_each_modality_and_retains_current_model(
+        self,
+        monkeypatch,
+    ):
         from collections import Counter
 
-        monkeypatch.setattr("dashscope_agenticx.config.VISION_MODELS", {"vision-1", "vision-2", "vision-3", "multi-1", "multi-2", "multi-3"})
-        monkeypatch.setattr("dashscope_agenticx.config.AUDIO_MODELS", {"audio-1", "audio-2", "audio-3", "multi-1", "multi-2", "multi-3"})
-        models = ["TEXT-1", "text-2", "text-3", "vision-1", "vision-2", "vision-3",
-                  "audio-1", "audio-2", "audio-3", "multi-1", "multi-2", "multi-3"]
+        monkeypatch.setattr(
+            "dashscope_agenticx.config.VISION_MODELS",
+            {
+                "vision-1",
+                "vision-2",
+                "vision-3",
+                "multi-1",
+                "multi-2",
+                "multi-3",
+            },
+        )
+        monkeypatch.setattr(
+            "dashscope_agenticx.config.AUDIO_MODELS",
+            {"audio-1", "audio-2", "audio-3", "multi-1", "multi-2", "multi-3"},
+        )
+        models = [
+            "TEXT-1",
+            "text-2",
+            "text-3",
+            "vision-1",
+            "vision-2",
+            "vision-3",
+            "audio-1",
+            "audio-2",
+            "audio-3",
+            "multi-1",
+            "multi-2",
+            "multi-3",
+        ]
         original = list(models)
-        selected = handlers_provider._shortlist_models("custom", models, " TEXT-3 ")
-        counts = Counter(handlers_provider._model_modality("custom", name) for name in selected)
+        selected = handlers_provider._shortlist_models(
+            "custom",
+            models,
+            " TEXT-3 ",
+        )
+        counts = Counter(
+            handlers_provider._model_modality("custom", name)
+            for name in selected
+        )
         assert counts == {"text": 2, "vision": 2, "audio": 2, "multimodal": 2}
         assert selected[:2] == ["text-3", "text-1"]
         assert models == original
 
-    @pytest.mark.parametrize("choice,expected", [("2", "qwen3.8-max"), (" QWEN3.7-MAX ", "qwen3.7-max")])
-    def test_model_picker_keeps_raw_ids_and_hidden_models(self, captured, monkeypatch, choice, expected):
+    @pytest.mark.parametrize(
+        "choice,expected",
+        [("2", "qwen3.8-max"), (" QWEN3.7-MAX ", "qwen3.7-max")],
+    )
+    def test_model_picker_keeps_raw_ids_and_hidden_models(
+        self,
+        captured,
+        monkeypatch,
+        choice,
+        expected,
+    ):
         from dashscope_agenticx.cli.wizard import WizardContext
 
         config = Config(tongyi_api_key="sk-test")
         answers = iter(["", choice, "n"])
         monkeypatch.setattr("builtins.input", lambda prompt: next(answers))
-        models = {"tongyi": ["qwen3.8-flash", "qwen3.8-max", "qwen3.7-max", "qwen3-vl-plus", "qwen3-vl-flash", "qwen-vl-max"]}
+        models = {
+            "tongyi": [
+                "qwen3.8-flash",
+                "qwen3.8-max",
+                "qwen3.7-max",
+                "qwen3-vl-plus",
+                "qwen3-vl-flash",
+                "qwen-vl-max",
+            ],
+        }
         monkeypatch.setattr(handlers_provider, "PROVIDER_MODELS", models)
-        monkeypatch.setattr(handlers_provider, "register_custom_model", lambda *args, **kwargs: pytest.fail("Registered known model"))
-        result = handlers_provider._provider_wizard(MagicMock(), config, context=WizardContext(setup=True))
+        monkeypatch.setattr(
+            handlers_provider,
+            "register_custom_model",
+            lambda *args, **kwargs: pytest.fail("Registered known model"),
+        )
+        result = handlers_provider._provider_wizard(
+            MagicMock(),
+            config,
+            context=WizardContext(setup=True),
+        )
         assert result.status == "completed" and config.model == expected
         output = captured.getvalue()
-        assert "qwen3.8-flash (text)" in output and "qwen3-vl-plus (vision)" in output
-        assert "qwen3.7-max" not in output.split("Up to 2 models per modality")[0]
+        assert (
+            "qwen3.8-flash (text)" in output
+            and "qwen3-vl-plus (vision)" in output
+        )
+        assert (
+            "qwen3.7-max" not in output.split("Up to 2 models per modality")[0]
+        )
 
     def test_bare_model_shows_current_and_usage(self, captured):
         cfg = _config("tongyi", "qwen3.8-max")

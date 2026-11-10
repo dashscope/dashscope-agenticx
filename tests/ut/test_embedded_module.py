@@ -13,18 +13,32 @@ def test_sdk_and_embedded_defaults_use_flash(monkeypatch):
     from dashscope_agenticx.config import Config
     from dashscope_agenticx.ui.embedded import run
 
-    assert inspect.signature(run).parameters["default_model"].default == "qwen3.8-flash"
-    assert inspect.signature(sdk.run_interactive).parameters["default_model"].default == "qwen3.8-flash"
+    assert (
+        inspect.signature(run).parameters["default_model"].default
+        == "qwen3.8-flash"
+    )
+    assert (
+        inspect.signature(sdk.run_interactive)
+        .parameters["default_model"]
+        .default
+        == "qwen3.8-flash"
+    )
     captured = {}
 
     def load(**kwargs):
         captured.update(kwargs)
-        return Config(provider=kwargs["default_provider"], model=kwargs["default_model"])
+        return Config(
+            provider=kwargs["default_provider"],
+            model=kwargs["default_model"],
+        )
 
     monkeypatch.setattr(Config, "load", load)
     config = sdk.load_config()
     assert config.provider == "tongyi" and config.model == "qwen3.8-flash"
-    assert captured == {"default_provider": "tongyi", "default_model": "qwen3.8-flash"}
+    assert captured == {
+        "default_provider": "tongyi",
+        "default_model": "qwen3.8-flash",
+    }
 
 
 def _embedded_config(module):

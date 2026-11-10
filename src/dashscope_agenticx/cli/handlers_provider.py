@@ -55,7 +55,11 @@ def _numbered_pick(
         console.print(f"[bold]{label}:[/bold]")
         for i, name in enumerate(options, 1):
             marker = "[green]✓[/green]" if name == default else " "
-            suffix = f" ({option_labels[i - 1]})" if option_labels is not None else ""
+            suffix = (
+                f" ({option_labels[i - 1]})"
+                if option_labels is not None
+                else ""
+            )
             console.print(f"  [{i}] {marker} {name}{suffix}")
         if custom_hint:
             console.print(f"[dim]{custom_hint}[/dim]")
@@ -73,7 +77,9 @@ def _model_modality(provider: str, model: str) -> str:
     vision = is_vision_model(model)
     audio = is_audio_model(model)
     if provider == "tongyi":
-        vision = vision or model.startswith(("qwen-vl", "qwen3-vl", "qwen-omni"))
+        vision = vision or model.startswith(
+            ("qwen-vl", "qwen3-vl", "qwen-omni"),
+        )
         audio = audio or model.startswith("qwen-omni")
     elif provider == "openai":
         vision = vision or model.startswith(("gpt-4o", "gpt-4-turbo"))
@@ -88,8 +94,14 @@ def _model_modality(provider: str, model: str) -> str:
     return "text"
 
 
-def _shortlist_models(provider: str, models: list[str], default: str) -> list[str]:
-    models = list(dict.fromkeys(normalize_model_name(model) for model in models))
+def _shortlist_models(
+    provider: str,
+    models: list[str],
+    default: str,
+) -> list[str]:
+    models = list(
+        dict.fromkeys(normalize_model_name(model) for model in models),
+    )
     default = normalize_model_name(default)
     preferred = [default] if default in models else []
     groups: dict[str, list[str]] = {}
@@ -139,20 +151,34 @@ def _wizard_key_step(config: Config, *, context=None, new_provider=None):
     import os
     import re
     from pathlib import Path
-    from dashscope_agenticx.cli.handlers_key import _set_extension_provider_token, all_key_targets
+    from dashscope_agenticx.cli.handlers_key import (
+        _set_extension_provider_token,
+        all_key_targets,
+    )
     from dashscope_agenticx.cli.wizard import WizardContext, WizardResult
-    from dashscope_agenticx.extensions import GLOBAL_EXTENSIONS_FILE, encrypt_for_toml, set_provider_secret
-    from dashscope_agenticx.providers.profile import build_profiles_from_config, maas_gateway
+    from dashscope_agenticx.extensions import (
+        GLOBAL_EXTENSIONS_FILE,
+        encrypt_for_toml,
+        set_provider_secret,
+    )
+    from dashscope_agenticx.providers.profile import (
+        build_profiles_from_config,
+        maas_gateway,
+    )
 
     context = context or WizardContext()
     extension = new_provider or find_provider(config.provider)
     name = extension.name if new_provider is not None else config.provider
     field = f"{name}_api_key"
     info = all_key_targets(config).get(name, {})
-    env_name = extension.api_key_env if extension is not None else info.get("env", "")
+    env_name = (
+        extension.api_key_env if extension is not None else info.get("env", "")
+    )
     if extension is not None and not extension.auth:
         return WizardResult("completed", name)
-    profiles = build_profiles_from_config(config) if new_provider is None else []
+    profiles = (
+        build_profiles_from_config(config) if new_provider is None else []
+    )
     existing = profiles[0].api_key if profiles else ""
     if name == "tongyi" and profiles and not config.base_url:
         maas = maas_gateway(config)
@@ -160,7 +186,12 @@ def _wizard_key_step(config: Config, *, context=None, new_provider=None):
             field = "maas_api_key"
             env_name = ""
     if field in context.prompted_credentials:
-        return WizardResult("deferred" if field in context.deferred_credentials else "completed", name)
+        return WizardResult(
+            "deferred"
+            if field in context.deferred_credentials
+            else "completed",
+            name,
+        )
     context.prompted_credentials.add(field)
     if env_name:
         context.prompted_credentials.add(env_name)
@@ -177,8 +208,16 @@ def _wizard_key_step(config: Config, *, context=None, new_provider=None):
     else:
         console.print("[bold]API Key[/bold]")
         console.print("  [1] Enter key (OS keyring)")
-        console.print(f"  [2] Environment variable ({env_name})" if env_name else "  [2] Environment variable")
-        console.print("  [0] No authentication" if new_provider is not None else "  [0] Configure later")
+        console.print(
+            f"  [2] Environment variable ({env_name})"
+            if env_name
+            else "  [2] Environment variable",
+        )
+        console.print(
+            "  [0] No authentication"
+            if new_provider is not None
+            else "  [0] Configure later",
+        )
         while True:
             source = _read_choice("Key source [1]: ", "1")
             if source in ("0", "1", "2"):
@@ -187,19 +226,34 @@ def _wizard_key_step(config: Config, *, context=None, new_provider=None):
         if source == "0" and new_provider is not None:
             extension.auth = False
             return WizardResult("completed", name)
-        value = _read_secret("API Key [Enter to skip]: ") if source == "1" else ""
+        value = (
+            _read_secret("API Key [Enter to skip]: ") if source == "1" else ""
+        )
     if source == "2":
         if extension is not None:
-            default_env = env_name or re.sub(r"[^A-Z0-9_]", "_", name.upper()) + "_API_KEY"
+            default_env = (
+                env_name
+                or re.sub(r"[^A-Z0-9_]", "_", name.upper()) + "_API_KEY"
+            )
             while True:
-                env_name = _read_choice(f"Environment variable [{default_env}]: ", default_env)
+                env_name = _read_choice(
+                    f"Environment variable [{default_env}]: ",
+                    default_env,
+                )
                 if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", env_name):
                     break
-                console.print("[yellow]Enter a valid environment variable name.[/yellow]")
+                console.print(
+                    "[yellow]Enter a valid environment variable name."
+                    "[/yellow]",
+                )
             if new_provider is not None:
                 extension.api_key_env = env_name
             else:
-                target = Path(extension.source) if extension.source else GLOBAL_EXTENSIONS_FILE
+                target = (
+                    Path(extension.source)
+                    if extension.source
+                    else GLOBAL_EXTENSIONS_FILE
+                )
                 if not set_provider_secret(target, name, api_key_env=env_name):
                     return WizardResult("failed", name)
                 extension.api_key_env = env_name
@@ -216,15 +270,20 @@ def _wizard_key_step(config: Config, *, context=None, new_provider=None):
             extension.api_key_env = ""
         elif extension is not None and name not in PROVIDERS:
             if not _set_extension_provider_token(
-                extension, config, direct_value=value,
-                persist=not context.setup, announce=not context.setup,
+                extension,
+                config,
+                direct_value=value,
+                persist=not context.setup,
+                announce=not context.setup,
             ):
                 return WizardResult("failed", name)
         else:
             setattr(config, field, value)
         return WizardResult("completed", name)
     if new_provider is not None and not extension.api_key_env:
-        extension.api_key_env = re.sub(r"[^A-Z0-9_]", "_", name.upper()) + "_API_KEY"
+        extension.api_key_env = (
+            re.sub(r"[^A-Z0-9_]", "_", name.upper()) + "_API_KEY"
+        )
     if new_provider is not None:
         env_name = extension.api_key_env
     context.deferred_credentials.add(field)
@@ -232,14 +291,21 @@ def _wizard_key_step(config: Config, *, context=None, new_provider=None):
         context.prompted_credentials.add(env_name)
         context.deferred_credentials.add(env_name)
     if context.prompt_missing_credentials:
-        console.print(f"[dim]API Key deferred; environment source: {env_name}.[/dim]" if env_name
-                      else "[dim]API Key deferred.[/dim]")
+        console.print(
+            f"[dim]API Key deferred; environment source: {env_name}.[/dim]"
+            if env_name
+            else "[dim]API Key deferred.[/dim]",
+        )
     return WizardResult("deferred", name)
 
 
 def _configure_provider(config: Config, *, context=None, use_defaults=False):
     """Shared provider selection, model and credential configuration."""
-    from dashscope_agenticx.cli.wizard import WizardContext, WizardResult, valid_api_url
+    from dashscope_agenticx.cli.wizard import (
+        WizardContext,
+        WizardResult,
+        valid_api_url,
+    )
     from dashscope_agenticx.extensions import current
 
     context = context or WizardContext()
@@ -249,82 +315,174 @@ def _configure_provider(config: Config, *, context=None, use_defaults=False):
             loaded = current()
             for error in loaded.errors:
                 console.print(f"[yellow]{error}[/yellow]")
-            names = list(PROVIDER_MODELS) + [item.name for item in loaded.providers if item.name not in PROVIDER_MODELS]
+            names = list(PROVIDER_MODELS) + [
+                item.name
+                for item in loaded.providers
+                if item.name not in PROVIDER_MODELS
+            ]
             default = config.provider if config.provider in names else ""
             if config.provider and not default:
-                console.print(f"[yellow]Configured provider '{config.provider}' is not available here. "
-                              "Enter cannot keep it; choose a provider below.[/yellow]")
-            provider = _numbered_pick("Available providers", names, default,
-                                     custom_hint="Not listed? Enter a new provider name to add it.")
+                console.print(
+                    f"[yellow]Configured provider '{config.provider}' "
+                    "is not available here. "
+                    "Enter cannot keep it; choose a provider below.[/yellow]",
+                )
+            provider = _numbered_pick(
+                "Available providers",
+                names,
+                default,
+                custom_hint="Not listed? Enter a new provider name to add it.",
+            )
             if not provider:
                 console.print("[dim]No provider chosen; cancelled[/dim]")
                 return WizardResult("cancelled")
             if provider in names:
                 break
-            console.print(f"[yellow]Provider '{provider}' is not registered.[/yellow]")
-            if _read_choice("Add this provider now? [y/N]: ", "n").lower() in ("y", "yes"):
+            console.print(
+                f"[yellow]Provider '{provider}' is not registered.[/yellow]",
+            )
+            if _read_choice("Add this provider now? [y/N]: ", "n").lower() in (
+                "y",
+                "yes",
+            ):
                 from dashscope_agenticx.dev import _provider_add
 
-                result = _provider_add(config, name=provider, show_usage=False, context=context)
+                result = _provider_add(
+                    config,
+                    name=provider,
+                    show_usage=False,
+                    context=context,
+                )
                 if result is not None and result.handled:
                     added = True
                     break
-            console.print("[dim]Choose a listed provider or press Enter to keep the current provider.[/dim]")
+            console.print(
+                "[dim]Choose a listed provider or press Enter "
+                "to keep the current provider.[/dim]",
+            )
         extension = find_provider(provider)
         if provider != config.provider or added:
             config.provider = provider
             config.base_url = ""
-            config.protocol = (extension.resolved_protocol() if extension is not None
-                               else "anthropic" if provider == "anthropic" else "openai")
-            models = extension.resolved_models() if extension is not None else PROVIDER_MODELS.get(provider, [])
-            config.model = (extension.default_model if extension is not None and extension.default_model
-                            else models[0] if models else "")
+            config.protocol = (
+                extension.resolved_protocol()
+                if extension is not None
+                else "anthropic"
+                if provider == "anthropic"
+                else "openai"
+            )
+            models = (
+                extension.resolved_models()
+                if extension is not None
+                else PROVIDER_MODELS.get(provider, [])
+            )
+            config.model = (
+                extension.default_model
+                if extension is not None and extension.default_model
+                else models[0]
+                if models
+                else ""
+            )
         if not added:
             models = PROVIDER_MODELS.get(provider, [])
             if not models and extension is not None:
                 models = extension.resolved_models()
-            models = list(dict.fromkeys(normalize_model_name(model) for model in models))
-            default_model = config.model if config.model in models or not models else models[0]
+            models = list(
+                dict.fromkeys(normalize_model_name(model) for model in models),
+            )
+            default_model = (
+                config.model
+                if config.model in models or not models
+                else models[0]
+            )
             shortlist = _shortlist_models(provider, models, default_model)
             model = _numbered_pick(
-                "Available models", shortlist, default_model,
-                custom_hint="Up to 2 models per modality. Enter any other model name.",
-                option_labels=[_model_modality(provider, name) for name in shortlist],
+                "Available models",
+                shortlist,
+                default_model,
+                custom_hint=(
+                    "Up to 2 models per modality. "
+                    "Enter any other model name."
+                ),
+                option_labels=[
+                    _model_modality(provider, name) for name in shortlist
+                ],
             )
             if not model:
                 return WizardResult("cancelled", provider)
             normalized = normalize_model_name(model)
             if normalized not in models and provider in PROVIDERS:
-                register_custom_model(config, provider, normalized, persist=not context.setup)
+                register_custom_model(
+                    config,
+                    provider,
+                    normalized,
+                    persist=not context.setup,
+                )
             config.model = normalized
-            if _read_choice("Advanced connection settings? [y/N]: ", "n").lower() in ("y", "yes"):
+            if _read_choice(
+                "Advanced connection settings? [y/N]: ",
+                "n",
+            ).lower() in ("y", "yes"):
                 while True:
-                    base_url = _read_choice(f"API base URL [{config.base_url or 'provider default'}]: ", config.base_url)
+                    base_url = _read_choice(
+                        "API base URL "
+                        f"[{config.base_url or 'provider default'}]: ",
+                        config.base_url,
+                    )
                     if not base_url or valid_api_url(base_url):
                         config.base_url = base_url
                         break
-                    console.print("[yellow]Enter an absolute HTTP(S) API URL without credentials or query parameters.[/yellow]")
+                    console.print(
+                        "[yellow]Enter an absolute HTTP(S) API URL "
+                        "without credentials or query parameters.[/yellow]",
+                    )
                 while True:
-                    protocol = _read_choice(f"Protocol [{config.protocol}]: ", config.protocol)
+                    protocol = _read_choice(
+                        f"Protocol [{config.protocol}]: ",
+                        config.protocol,
+                    )
                     if protocol in ("openai", "anthropic", "dashscope"):
                         config.protocol = protocol
                         break
-                    console.print("[yellow]Choose openai, anthropic or dashscope.[/yellow]")
+                    console.print(
+                        "[yellow]Choose openai, anthropic "
+                        "or dashscope.[/yellow]",
+                    )
     if added:
         deferred = f"{config.provider}_api_key" in context.deferred_credentials
-        return WizardResult("deferred" if deferred else "completed", config.provider)
-    return _wizard_key_step(config, context=context) or WizardResult("completed", config.provider)
+        return WizardResult(
+            "deferred" if deferred else "completed",
+            config.provider,
+        )
+    return _wizard_key_step(config, context=context) or WizardResult(
+        "completed",
+        config.provider,
+    )
 
 
-def _provider_wizard(agent: Agent, config: Config, *, context=None, use_defaults=False):
+def _provider_wizard(
+    agent: Agent,
+    config: Config,
+    *,
+    context=None,
+    use_defaults=False,
+):
     from copy import deepcopy
 
-    from dashscope_agenticx.cli.wizard import WizardCancelled, WizardContext, WizardResult
+    from dashscope_agenticx.cli.wizard import (
+        WizardCancelled,
+        WizardContext,
+        WizardResult,
+    )
 
     context = context or WizardContext()
     previous = deepcopy(config.__dict__)
     try:
-        result = _configure_provider(config, context=context, use_defaults=use_defaults)
+        result = _configure_provider(
+            config,
+            context=context,
+            use_defaults=use_defaults,
+        )
     except WizardCancelled:
         console.print("[dim]Provider configuration cancelled.[/dim]")
         result = WizardResult("cancelled")
@@ -337,13 +495,28 @@ def _provider_wizard(agent: Agent, config: Config, *, context=None, use_defaults
         config.save_global()
         config.save_workspace()
         if _rebuild_provider(agent, config):
-            console.print(f"[green]✓ Provider: {config.provider}/{config.model}[/green]")
+            console.print(
+                f"[green]✓ Provider: {config.provider}/{config.model}[/green]",
+            )
     return True
 
 
-def handle_provider_command(cmd: str, agent: Agent, config: Config, *, context=None, use_defaults=False):
+def handle_provider_command(
+    cmd: str,
+    agent: Agent,
+    config: Config,
+    *,
+    context=None,
+    use_defaults=False,
+):
     """Open the shared provider wizard, optionally as a setup step."""
-    return _provider_wizard(agent, config, context=context, use_defaults=use_defaults)
+    del cmd
+    return _provider_wizard(
+        agent,
+        config,
+        context=context,
+        use_defaults=use_defaults,
+    )
 
 
 def handle_model_command(cmd: str, agent: Agent, config: Config) -> bool:

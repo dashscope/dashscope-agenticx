@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Shared state for interactive configuration commands and setup."""
 
 from __future__ import annotations
@@ -52,11 +53,16 @@ def valid_api_url(value: str) -> bool:
 
     try:
         parsed = urlsplit(value)
-        parsed.port
+        port = parsed.port
         return bool(
-            parsed.scheme in ("http", "https") and parsed.hostname
-            and not parsed.username and not parsed.password and not parsed.query
-            and not parsed.fragment and not any(character.isspace() for character in value)
+            parsed.scheme in ("http", "https")
+            and parsed.hostname
+            and not parsed.username
+            and not parsed.password
+            and not parsed.query
+            and not parsed.fragment
+            and (port is None or port >= 0)
+            and not any(character.isspace() for character in value),
         )
     except ValueError:
         return False

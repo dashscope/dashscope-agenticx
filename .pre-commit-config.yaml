@@ -84,6 +84,8 @@ repos:
           | \.html$
           )
         args: [
+          --py-version=3.10,
+          --max-returns=10,
           --disable=W0511,
           --disable=W0718,
           --disable=W0122,

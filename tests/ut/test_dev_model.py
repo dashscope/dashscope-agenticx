@@ -94,8 +94,16 @@ class TestProviderWizardModelStep:
         import dashscope_agenticx.cli.handlers_provider as hp
 
         monkeypatch.setattr(hp, "find_provider", lambda name: None)
-        monkeypatch.setattr(hp, "_wizard_key_step", lambda config, **kwargs: None)
-        monkeypatch.setattr(hp, "_read_choice", lambda prompt, default="": default)
+        monkeypatch.setattr(
+            hp,
+            "_wizard_key_step",
+            lambda config, **kwargs: None,
+        )
+        monkeypatch.setattr(
+            hp,
+            "_read_choice",
+            lambda prompt, default="": default,
+        )
         monkeypatch.setattr(
             hp,
             "_rebuild_provider",
@@ -106,7 +114,13 @@ class TestProviderWizardModelStep:
             lambda: types.SimpleNamespace(errors=[], providers=[]),
         )
 
-        def fake_pick(label, options, default, custom_hint="", option_labels=None):
+        def fake_pick(
+            label,
+            options,
+            default,
+            custom_hint="",
+            option_labels=None,
+        ):
             if "available models" in label.lower():
                 return "Qwen9.9-Test"
             return default
@@ -135,8 +149,16 @@ class TestProviderWizardModelStep:
         import dashscope_agenticx.cli.handlers_provider as hp
 
         monkeypatch.setattr(hp, "find_provider", lambda name: None)
-        monkeypatch.setattr(hp, "_wizard_key_step", lambda config, **kwargs: None)
-        monkeypatch.setattr(hp, "_read_choice", lambda prompt, default="": default)
+        monkeypatch.setattr(
+            hp,
+            "_wizard_key_step",
+            lambda config, **kwargs: None,
+        )
+        monkeypatch.setattr(
+            hp,
+            "_read_choice",
+            lambda prompt, default="": default,
+        )
         monkeypatch.setattr(
             hp,
             "_rebuild_provider",
