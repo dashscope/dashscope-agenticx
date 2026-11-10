@@ -113,6 +113,8 @@ jobs:
         with:
           name: python-distribution
           path: dist/
+      - name: Keep only Python distributions
+        run: rm dist/SHA256SUMS-python
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
