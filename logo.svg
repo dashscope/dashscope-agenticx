@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="120" viewBox="0 0 480 120" role="img" aria-labelledby="logo-title logo-description">
+  <title id="logo-title">DashScope AgenticX</title>
+  <desc id="logo-description">A connected X symbol representing Expert, Execution, and Extension.</desc>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="120" rx="20" fill="#0f172a"/>
+  <rect x="24" y="24" width="72" height="72" rx="18" fill="#163044"/>
+  <path d="M43 43L77 77M77 43L43 77" fill="none" stroke="url(#accent)" stroke-width="9" stroke-linecap="round"/>
+  <g fill="#5eead4">
+    <circle cx="43" cy="43" r="5"/>
+    <circle cx="77" cy="77" r="5"/>
+    <circle cx="77" cy="43" r="5"/>
+    <circle cx="43" cy="77" r="5"/>
+  </g>
+  <text x="119" y="45" fill="#94a3b8" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="600" letter-spacing="3">DASHSCOPE</text>
+  <text x="116" y="86" fill="#f8fafc" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" letter-spacing="-1">Agentic<tspan fill="#5eead4">X</tspan></text>
+</svg>

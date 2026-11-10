@@ -1,0 +1,53 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.env
+*.spec
+!agenticx.spec
+.claude/
+.acli/
+.agenticcli/
+/.agenticx/
+/keys.log
+traces/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE artifacts
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Coverage artifacts
+.coverage
+.coverage.*
+
+# Test artifacts from `bl image/video generate` runs against agenticx
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.webm
+*.wav
+*.mp3
+
+# npm side products (agenticx isn't a Node project; ignore stray init artifacts)
+node_modules/
+package.json
+package-lock.json
+
+# Stray files
+*.bak
+**/history
+.qoder/
+
+/bench/
+/md/
+/.aoneci/
+/.gitlab-ci.yml

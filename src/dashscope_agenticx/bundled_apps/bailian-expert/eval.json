@@ -1,0 +1,1 @@
+{"schema_version": 1, "cases": [{"name": "design", "input": "design a Bailian app", "expects": ["permissions"]}]}

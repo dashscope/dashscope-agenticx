@@ -1,0 +1,16 @@
+[app]
+name = "dashscope-sdk-expert"
+version = "1.0.0"
+publisher = "alibaba-cloud"
+description = "DashScope SDK development and diagnosis expert"
+profile = ".agenticx"
+eval = "eval.json"
+acceptance = "acceptance.toml"
+
+[runtime]
+requires = ">=1.0.0,<2"
+
+[permissions]
+shell = true
+network = ["dashscope.aliyuncs.com", "github.com"]
+filesystem = ["workspace:read", "workspace:write"]

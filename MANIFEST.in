@@ -1,0 +1,12 @@
+include README.md
+include README_zh.md
+include logo.svg
+include user-guide.md
+include user-guide_zh.md
+include migration-to-1.0.md
+include CHANGELOG.md
+include SECURITY.md
+include CONTRIBUTING.md
+include RELEASE.md
+prune md
+recursive-include src/dashscope_agenticx/bundled_apps *.toml *.json *.md

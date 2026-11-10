@@ -1,0 +1,106 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install -e ".[dev,all]"
+
+      - name: Run unit tests
+        # --cov enforces the fail_under ratchet from pyproject.toml
+        # ([tool.coverage.report]); raise it over time, never lower it.
+        run: |
+          pytest tests/ -q --ignore=tests/e2e --cov --cov-report=term --cov-report=json:coverage.json
+          python scripts/coverage_contract.py coverage.json
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install -e ".[dev,all]"
+
+      - name: Run e2e tests
+        run: pytest tests/e2e/ -q
+
+  cross-platform-smoke:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: python scripts/release_check.py
+      - run: pytest -q tests/ut/test_runtime_context.py tests/ut/test_agent_events.py tests/ut/test_app_store.py
+
+  package-and-security:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+        scope: [base, all]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - name: Install built Runtime in audit environment
+        run: |
+          wheel=$(python -c 'from pathlib import Path; print(next(Path("dist").glob("*.whl")).resolve())')
+          extra=""
+          if [ "${{ matrix.scope }}" = "all" ]; then extra="[all]"; fi
+          python -m venv audit-env
+          audit-env/bin/python -m pip install --upgrade "pip>=26.2"
+          audit-env/bin/python -m pip install "${wheel}${extra}"
+      - name: Use supported Python for audit tools
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install audit tools separately from Runtime
+        run: python -m pip install --upgrade "pip>=26.2" pip-audit cyclonedx-bom
+      - name: Audit installed Runtime dependencies
+        run: |
+          packages=$(audit-env/bin/python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
+          pip-audit --path "$packages" --format json --output audit.json
+      - name: Generate installed environment SBOM
+        if: always()
+        run: cyclonedx-py environment audit-env/bin/python --output-file sbom.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-${{ matrix.python-version }}-${{ matrix.scope }}
+          path: |
+            sbom.json
+            audit.json

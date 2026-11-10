@@ -1,0 +1,15 @@
+[app]
+name = "bailian-expert"
+version = "1.0.0"
+publisher = "alibaba-cloud"
+description = "Bailian application development expert"
+profile = ".agenticx"
+eval = "eval.json"
+acceptance = "acceptance.toml"
+
+[runtime]
+requires = ">=1.0.0,<2"
+
+[permissions]
+network = ["bailian.console.aliyun.com", "dashscope.aliyuncs.com"]
+filesystem = ["workspace:read"]
