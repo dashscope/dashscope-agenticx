@@ -45,7 +45,9 @@ class TestIsAvailable:
 
     @pytest.mark.parametrize("error_type", [OSError, Exception])
     def test_audio_backend_initialization_failure(
-        self, monkeypatch, error_type
+        self,
+        monkeypatch,
+        error_type,
     ):
         import builtins
 
