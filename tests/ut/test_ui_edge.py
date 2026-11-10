@@ -5,8 +5,9 @@ strings, _tui_input timeout/concurrency races, embedded.run delegation."""
 from __future__ import annotations
 
 import subprocess
+import sys
 import threading
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -90,6 +91,11 @@ class TestVoiceDegradation:
 
     async def test_asr_start_failure_reports_error(self, monkeypatch):
         monkeypatch.setattr(voice, "is_available", lambda: (True, ""))
+        monkeypatch.setitem(
+            sys.modules,
+            "sounddevice",
+            ModuleType("sounddevice"),
+        )
 
         class FakeASR:
             def __init__(self, api_key, model):
@@ -106,6 +112,26 @@ class TestVoiceDegradation:
         )
         assert result is None
         assert any("连接拒绝" in s for s in shown)
+
+    @pytest.mark.parametrize("error_type", [OSError, Exception])
+    def test_audio_backend_initialization_failure(
+        self,
+        monkeypatch,
+        error_type,
+    ):
+        import builtins
+
+        original_import = builtins.__import__
+
+        def failing_import(name, *args, **kwargs):
+            if name == "sounddevice":
+                raise error_type("audio backend unavailable")
+            return original_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", failing_import)
+        ok, err = voice.is_available()
+        assert ok is False
+        assert "audio backend" in err
 
 
 class TestCameraDegradation:

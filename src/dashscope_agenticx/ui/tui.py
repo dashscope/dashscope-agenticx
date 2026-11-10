@@ -2077,9 +2077,16 @@ class AgenticXApp(App):
         if request.selections is not None:
             candidates += output.native_copy_candidates()
         if request.screen_selection is not None:
-            candidates += (
-                self._native_screen_candidate(request.screen_selection),
-            )
+            try:
+                candidates += (
+                    self._native_screen_candidate(request.screen_selection),
+                )
+            except KeyError:
+                # App shutdown unmounts widget component classes while the
+                # settle timer may still fire; the screen can no longer
+                # be rendered, so stop watching instead of crashing.
+                self._stop_clipboard_watch()
+                return
         request.candidates = tuple(dict.fromkeys(candidates))
         copied_text = request.clipboard.read_text()
         if request.clipboard.change_count() != revision:

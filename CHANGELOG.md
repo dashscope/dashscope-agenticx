@@ -63,6 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python 3.10 audit environments upgrade their bootstrap setuptools instead
   of retaining the runner's vulnerable version. Linux unit-test runners
   install PortAudio so voice degradation tests exercise their intended paths.
+- Audio backend initialization failures now degrade gracefully. Offline voice
+  tests mock sounddevice rather than requiring a running audio server or
+  physical device, and release-document checks use the actual release date.
 - Dependency requirements exclude the security scan's affected Runtime
   versions. Pillow-backed vision/media require Python 3.11+; Python 3.10
   retains base Runtime support and the `all` extra omits Pillow on that version.

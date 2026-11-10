@@ -2832,6 +2832,43 @@ class TestSelectionActions:
             assert macos_clipboard.writes == initial_writes
             assert app._clipboard_settle_timer is None
 
+    async def test_settle_stops_when_screen_widgets_already_unmounted(
+        self,
+        macos_clipboard,
+        monkeypatch,
+    ):
+        """The settle timer may fire during app shutdown, after Textual
+        unmounted widget component classes; rendering must not crash."""
+        app = _make_app()
+        async with app.run_test(size=(80, 30)) as pilot:
+            self._select_multiscreen_output(app)
+            await pilot.pause()
+            app.on_text_selected(events.TextSelected())
+            request = app._clipboard_request
+            assert request is not None
+            request.verify = True
+            request.screen_selection = Selection.from_offsets(
+                Offset(0, 0),
+                Offset(10, 5),
+            )
+
+            def unmounted_render():
+                raise KeyError(
+                    "No 'text-area--gutter' key in COMPONENT_CLASSES",
+                )
+
+            monkeypatch.setattr(
+                app.screen._compositor,
+                "render_strips",
+                unmounted_render,
+            )
+            app._settle_clipboard_copy(
+                request,
+                app._clipboard_copy_generation,
+            )
+            assert app._clipboard_request is None
+            assert macos_clipboard.writes == []
+
     async def test_native_copy_watcher_rejects_selected_text_outside_output(
         self,
         macos_clipboard,
