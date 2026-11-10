@@ -123,8 +123,12 @@ def test_source_manifest_includes_public_docs_and_excludes_internal_md():
         assert (root / name).is_file()
         assert f"include {name}" in directives
     assert "prune md" in directives
+    assert "prune bench" in directives
     assert not any(
         line.startswith("recursive-include md ") for line in directives
+    )
+    assert not any(
+        line.startswith("recursive-include bench ") for line in directives
     )
 
 

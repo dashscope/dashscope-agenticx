@@ -9,4 +9,5 @@ include SECURITY.md
 include CONTRIBUTING.md
 include RELEASE.md
 prune md
+prune bench
 recursive-include src/dashscope_agenticx/bundled_apps *.toml *.json *.md

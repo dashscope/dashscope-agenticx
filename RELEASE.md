@@ -23,5 +23,20 @@ The tag workflow builds Python distributions and platform binaries, smoke
 tests the binaries, and uploads assets plus SHA-256 checksums to a draft
 GitHub Release. Use the version's CHANGELOG entry as its release notes and
 publish the draft only after reviewing the build results and assets.
-Publishing a GitHub Release does not upload the Python package to PyPI;
-PyPI publication is a separate, explicitly authorized step.
+
+PyPI publication uses the tag workflow's `pypi` job with trusted publishing
+(OIDC), so no API token is stored in the repository. One-time setup: on
+PyPI, add a trusted publisher for `dashscope/dashscope-agenticx`, workflow
+`release.yml`, environment `pypi`; in the GitHub repository, create the
+`pypi` environment and require manual approval so every upload stays an
+explicitly authorized step. The source distribution includes only public
+documents; the internal `md/` and `bench/` directories are pruned.
+
+To publish manually instead, build and verify the exact artifacts first:
+
+```
+python -m build
+twine check dist/*
+python scripts/release_check.py
+twine upload dist/dashscope_agenticx-<version>*
+```
