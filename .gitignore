@@ -8,8 +8,6 @@ build/
 *.spec
 !agenticx.spec
 .claude/
-.acli/
-.agenticcli/
 /.agenticx/
 /keys.log
 traces/

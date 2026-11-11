@@ -78,6 +78,39 @@ class TestVoiceCancelEvent:
         assert seen["event"] is caller_event
 
 
+class TestVoiceSDKClient:
+    def test_marks_sdk_client_before_recognition(self, monkeypatch):
+        events: list[str] = []
+
+        class FakeRecognitionCallback:
+            pass
+
+        class FakeRecognition:
+            def __init__(self, **kwargs):
+                events.append("recognition")
+
+        monkeypatch.setenv("DASHSCOPE_API_KEY", "sk-test")
+        monkeypatch.setattr(
+            voice,
+            "mark_dashscope_sdk_client",
+            lambda: events.append("mark"),
+        )
+        monkeypatch.setattr(
+            "dashscope.audio.asr.Recognition",
+            FakeRecognition,
+        )
+        monkeypatch.setattr(
+            "dashscope.audio.asr.RecognitionCallback",
+            FakeRecognitionCallback,
+        )
+
+        asr = voice._RealtimeASR("sk-test", "paraformer-realtime-v2")
+        recognition = asr._make_recognition()
+
+        assert isinstance(recognition, FakeRecognition)
+        assert events == ["mark", "recognition"]
+
+
 class TestVoiceDegradation:
     async def test_missing_deps_reports_error(self, monkeypatch):
         monkeypatch.setattr(voice, "is_available", lambda: (False, "缺依赖-x"))

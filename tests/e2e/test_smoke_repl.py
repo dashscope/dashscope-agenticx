@@ -50,7 +50,7 @@ def _run_agenticx(
 
 
 class TestReplSmoke:
-    def test_fresh_workspace_accepts_default_model_and_separate_examples(
+    def test_fresh_workspace_accepts_default_model_and_separate_expert(
         self,
         tmp_path,
     ):
@@ -100,7 +100,7 @@ class TestReplSmoke:
         )
         assert (workspace / ".agenticx" / "config.toml").is_file()
 
-    def test_fresh_workspace_runs_setup_without_downloading_examples(
+    def test_fresh_workspace_runs_setup_without_downloading_expert(
         self,
         tmp_path,
     ):
@@ -169,4 +169,4 @@ class TestReplSmoke:
         home.mkdir()
         proc = _run_agenticx(["--version"], "", home, tmp_path)
         assert proc.returncode == 0
-        assert proc.stdout.strip() == "agenticx 1.0.0"
+        assert proc.stdout.strip() == "agenticx 1.0.1"

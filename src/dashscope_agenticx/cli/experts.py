@@ -16,12 +16,12 @@ from rich.console import Console
 
 console = Console()
 
-_DEFAULT_EXAMPLES_REPO = (
+_DEFAULT_EXPERTS_REPO = (
     "https://github.com/dashscope/dashscope-agenticx-experts.git"
 )
-_DEFAULT_EXAMPLES_BRANCH = "main"
+_DEFAULT_EXPERT_BRANCH = "main"
 
-_KNOWN_EXAMPLES = [
+_KNOWN_EXPERTS = [
     "basic-chat",
     "dashscope-sdk-expert",
     "bailian-expert",
@@ -34,7 +34,7 @@ def _selected_expert(workspace: Path | None = None) -> str:
 
     workspace = Path(workspace) if workspace is not None else WORKSPACE_DIR
     try:
-        marker = _safe_example_path(
+        marker = _safe_expert_path(
             workspace.parent,
             Path(workspace.name) / "expert.toml",
         )
@@ -42,13 +42,13 @@ def _selected_expert(workspace: Path | None = None) -> str:
         name = data.get("name", "")
         if not isinstance(name, str) or not name:
             return ""
-        _validate_example_name(name)
+        _validate_expert_name(name)
         return name
     except (OSError, ValueError):
         return ""
 
 
-def _get_examples_dir() -> Path:
+def _get_experts_dir() -> Path:
     """Return the canonical local App Catalog directory."""
     project_root = Path(__file__).resolve().parent.parent.parent.parent
     return project_root / "apps"
@@ -60,32 +60,32 @@ def _get_configured_repo() -> tuple[str, str]:
 
         cfg = Config.load()
         return (
-            cfg.examples_repo or _DEFAULT_EXAMPLES_REPO,
-            cfg.examples_branch or _DEFAULT_EXAMPLES_BRANCH,
+            cfg.expert_repo or _DEFAULT_EXPERTS_REPO,
+            cfg.expert_branch or _DEFAULT_EXPERT_BRANCH,
         )
     except Exception:
-        return _DEFAULT_EXAMPLES_REPO, _DEFAULT_EXAMPLES_BRANCH
+        return _DEFAULT_EXPERTS_REPO, _DEFAULT_EXPERT_BRANCH
 
 
-def _list_examples() -> list[str]:
-    examples_dir = _get_examples_dir()
-    if not examples_dir.is_dir():
+def _list_experts() -> list[str]:
+    experts_dir = _get_experts_dir()
+    if not experts_dir.is_dir():
         return []
     return sorted(
         d.name
-        for d in examples_dir.iterdir()
+        for d in experts_dir.iterdir()
         if d.is_dir() and not d.name.startswith((".", "_"))
     )
 
 
-def _clone_example_to_temp(
+def _clone_expert_to_temp(
     name: str,
     repo: str,
     branch: str,
     tmp: Path,
 ) -> Path:
     """Sparse-clone apps/<name> from the App Catalog into tmp."""
-    _validate_example_name(name)
+    _validate_expert_name(name)
     try:
         subprocess.run(
             [
@@ -138,7 +138,7 @@ def _clone_example_to_temp(
     return src
 
 
-def _list_remote_examples(repo: str, branch: str) -> list[str]:
+def _list_remote_experts(repo: str, branch: str) -> list[str]:
     """List apps/<name> directories via a blob-less clone."""
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(
@@ -168,8 +168,8 @@ def _list_remote_examples(repo: str, branch: str) -> list[str]:
     return sorted(d for d in out.splitlines() if not d.startswith((".", "_")))
 
 
-def _save_examples_repo(repo: str) -> None:
-    """Write examples_repo into the global AgenticX config (create or
+def _save_expert_repo(repo: str) -> None:
+    """Write expert_repo into the global AgenticX config (create or
     replace)."""
     from dashscope_agenticx.config import CONFIG_DIR, CONFIG_FILE
     from dashscope_agenticx.utils.paths import atomic_write_text
@@ -179,9 +179,9 @@ def _save_examples_repo(repo: str) -> None:
     text = (
         CONFIG_FILE.read_text(encoding="utf-8") if CONFIG_FILE.exists() else ""
     )
-    line = f"examples_repo = {toml_str(repo)}"
-    if re.search(r"(?m)^examples_repo\s*=", text):
-        text = re.sub(r"(?m)^examples_repo\s*=.*$", line, text)
+    line = f"expert_repo = {toml_str(repo)}"
+    if re.search(r"(?m)^expert_repo\s*=", text):
+        text = re.sub(r"(?m)^expert_repo\s*=.*$", line, text)
     else:
         if text and not text.endswith("\n"):
             text += "\n"
@@ -189,12 +189,12 @@ def _save_examples_repo(repo: str) -> None:
     atomic_write_text(CONFIG_FILE, text)
 
 
-def _validate_example_name(name: str) -> None:
+def _validate_expert_name(name: str) -> None:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
         raise ValueError("expert name must be a single directory name")
 
 
-def _safe_example_path(root: Path, relative: Path) -> Path:
+def _safe_expert_path(root: Path, relative: Path) -> Path:
     if relative.is_absolute() or ".." in relative.parts:
         raise ValueError("expert path escapes the workspace")
     target = root
@@ -207,7 +207,7 @@ def _safe_example_path(root: Path, relative: Path) -> Path:
     return target
 
 
-def _example_files(src: Path) -> list[Path]:
+def _expert_files(src: Path) -> list[Path]:
     """All copyable files under an expert dir (relative-safe, no junk)."""
     entries = sorted(src.rglob("*"))
     if src.is_symlink() or any(path.is_symlink() for path in entries):
@@ -344,7 +344,7 @@ def _merge_extension_profile(source: Path, target: Path) -> str:
     return merged
 
 
-def _copy_example_flat(
+def _copy_expert_flat(
     src: Path,
     dst: Path,
     *,
@@ -363,18 +363,18 @@ def _copy_example_flat(
     (single rolling backup, replaced on each download) so the last merge
     can be rolled back.
     """
-    agenticx_dir = _safe_example_path(dst, Path(".agenticx"))
-    source_files = _example_files(src)
+    agenticx_dir = _safe_expert_path(dst, Path(".agenticx"))
+    source_files = _expert_files(src)
     _validate_expert_profile(src, source_files)
-    _safe_example_path(dst, Path(".agenticx/backup"))
+    _safe_expert_path(dst, Path(".agenticx/backup"))
     copies: list[
         tuple[Path, Path]
     ] = []  # (source file, path relative to dst/.agenticx)
     merged_extensions: dict[Path, str] = {}
     if expert_name:
-        _validate_example_name(expert_name)
-        _safe_example_path(dst, Path(".agenticx/expert.toml"))
-        _safe_example_path(dst, Path(".agenticx/backup/expert.toml"))
+        _validate_expert_name(expert_name)
+        _safe_expert_path(dst, Path(".agenticx/expert.toml"))
+        _safe_expert_path(dst, Path(".agenticx/backup/expert.toml"))
     for p in source_files:
         rel = p.relative_to(src)
         if rel.parts[0] == ".agenticx":
@@ -387,8 +387,8 @@ def _copy_example_flat(
             raise ValueError(
                 "experts must not overwrite the backup directory",
             )
-        _safe_example_path(dst, Path(".agenticx") / rel)
-        _safe_example_path(dst, Path(".agenticx/backup") / rel)
+        _safe_expert_path(dst, Path(".agenticx") / rel)
+        _safe_expert_path(dst, Path(".agenticx/backup") / rel)
         if preserve_configuration and rel == Path("config.toml"):
             continue
         if expert_name and rel == Path("expert.toml"):
@@ -533,11 +533,11 @@ def _prune_empty_dirs(path: Path, stop: Path) -> None:
         path = path.parent
 
 
-def _restore_example_backup(dst: Path) -> bool:
+def _restore_expert_backup(dst: Path) -> bool:
     """Restore the single .agenticx/backup: originals copied back,
     added files
     removed."""
-    backup = _safe_example_path(dst, Path(".agenticx/backup"))
+    backup = _safe_expert_path(dst, Path(".agenticx/backup"))
     if not backup.is_dir():
         console.print(
             "[yellow]No restorable backup found "
@@ -546,7 +546,7 @@ def _restore_example_backup(dst: Path) -> bool:
         return False
 
     removals = []
-    manifest = _safe_example_path(dst, Path(".agenticx/backup/.manifest"))
+    manifest = _safe_expert_path(dst, Path(".agenticx/backup/.manifest"))
     if manifest.is_file():
         for line in manifest.read_text(encoding="utf-8").splitlines():
             rel = line.strip()
@@ -555,8 +555,8 @@ def _restore_example_backup(dst: Path) -> bool:
             backup_rel = Path(rel).relative_to(".agenticx")
             if not backup_rel.parts or backup_rel.parts[0] == "backup":
                 raise ValueError("invalid expert backup manifest")
-            target = _safe_example_path(dst, Path(rel))
-            original = _safe_example_path(
+            target = _safe_expert_path(dst, Path(rel))
+            original = _safe_expert_path(
                 dst,
                 Path(".agenticx/backup") / backup_rel,
             )
@@ -565,11 +565,11 @@ def _restore_example_backup(dst: Path) -> bool:
             removals.append(target)
 
     restores = []
-    for source in _example_files(backup):
+    for source in _expert_files(backup):
         if source.name == ".manifest":
             continue
         relative = source.relative_to(backup)
-        target = _safe_example_path(dst, Path(".agenticx") / relative)
+        target = _safe_expert_path(dst, Path(".agenticx") / relative)
         if relative.parts[0] == "backup":
             raise ValueError("invalid expert backup contents")
         restores.append((source, target))
@@ -596,25 +596,25 @@ def _restore_example_backup(dst: Path) -> bool:
     return True
 
 
-def _print_example_list():
-    examples_dir = _get_examples_dir()
-    available = _list_examples()
+def _print_expert_list():
+    experts_dir = _get_experts_dir()
+    available = _list_experts()
     if not available:
         repo, branch = _get_configured_repo()
         if repo:
             try:
-                available = _list_remote_examples(repo, branch)
+                available = _list_remote_experts(repo, branch)
             except Exception:
                 available = []
     if not available:
-        available = _KNOWN_EXAMPLES
+        available = _KNOWN_EXPERTS
     console.print(
         "[dim]Experts are role templates. Use `agenticx app` for "
         "versioned installable applications.[/dim]",
     )
     console.print("[bold]Available experts:[/bold]")
     for name in available:
-        readme = examples_dir / name / "README.md"
+        readme = experts_dir / name / "README.md"
         desc = ""
         if readme.exists():
             first_line = readme.read_text(encoding="utf-8").split("\n", 1)[0]
@@ -644,23 +644,23 @@ def _print_example_list():
     )
 
 
-def _handle_example_command(
+def _handle_expert_command(
     args,
     *,
     show_usage: bool = True,
     preserve_configuration: bool = False,
 ):
     """Handle `agenticx expert [list | download <name>]`."""
-    examples_dir = _get_examples_dir()
+    experts_dir = _get_experts_dir()
 
     if not args:
-        _print_example_list()
+        _print_expert_list()
         return None
 
     sub = args[0]
 
     if sub in ("list", "--list", "-l"):
-        _print_example_list()
+        _print_expert_list()
         return None
 
     # restore [--target DIR]
@@ -675,7 +675,7 @@ def _handle_example_command(
             if idx + 1 < len(args):
                 target_dir = Path(args[idx + 1])
         try:
-            _restore_example_backup(target_dir)
+            _restore_expert_backup(target_dir)
         except (ValueError, OSError) as error:
             console.print(f"[yellow]Error: {error}[/yellow]")
         return None
@@ -686,12 +686,12 @@ def _handle_example_command(
             console.print(
                 "[yellow]Error: download requires an expert name[/yellow]",
             )
-            available = _list_examples() or _KNOWN_EXAMPLES
+            available = _list_experts() or _KNOWN_EXPERTS
             console.print(f"[dim]Available: {', '.join(available)}[/dim]")
             return None
         name = args[1]
         try:
-            _validate_example_name(name)
+            _validate_expert_name(name)
         except ValueError as error:
             console.print(f"[yellow]Error: {error}[/yellow]")
             return None
@@ -711,10 +711,10 @@ def _handle_example_command(
             if idx + 1 < len(args):
                 provided = args[idx + 1]
 
-        src = examples_dir / name
+        src = experts_dir / name
         if src.is_dir():
             try:
-                return _copy_example_flat(
+                return _copy_expert_flat(
                     src,
                     target_dir,
                     force=force,
@@ -729,17 +729,17 @@ def _handle_example_command(
         repo, branch = _get_configured_repo()
         repo = provided or repo
         if provided:
-            _save_examples_repo(provided)
+            _save_expert_repo(provided)
             console.print(
-                "[dim]Saved examples_repo to AgenticX global config[/dim]",
+                "[dim]Saved expert_repo to AgenticX global config[/dim]",
             )
         console.print(
             f"[dim]Downloading expert '{name}' from {repo}...[/dim]",
         )
         try:
             with tempfile.TemporaryDirectory() as tmp:
-                fetched = _clone_example_to_temp(name, repo, branch, Path(tmp))
-                return _copy_example_flat(
+                fetched = _clone_expert_to_temp(name, repo, branch, Path(tmp))
+                return _copy_expert_flat(
                     fetched,
                     target_dir,
                     force=force,
@@ -751,7 +751,7 @@ def _handle_example_command(
             console.print(f"[yellow]Error: {e}[/yellow]")
             console.print(f"[dim]Repo: {repo} (branch: {branch})[/dim]")
             console.print(
-                "[dim]You can set examples_repo in "
+                "[dim]You can set expert_repo in "
                 "~/.agenticx/config.toml[/dim]",
             )
         return False

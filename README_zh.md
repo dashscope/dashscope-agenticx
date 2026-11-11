@@ -98,7 +98,7 @@ agenticx
 ```bash
 agenticx --cli
 agenticx --tui
-agenticx "列出当前目录的文件，并概述项目结构"
+agenticx -c "列出当前目录的文件，并概述项目结构"
 ```
 
 交互会话示例：
@@ -179,6 +179,31 @@ agenticx app info <app-name>
 agenticx app verify <app-name>
 agenticx app update <app-name>
 ```
+
+例如，从官方 App Catalog 安装并校验 DashScope SDK Expert：
+
+```bash
+python -m pip install "dashscope-agenticx>=1.0.1,<2"
+git clone https://github.com/dashscope/dashscope-agenticx-experts.git
+cd dashscope-agenticx-experts
+agenticx app install ./apps/dashscope-sdk-expert
+agenticx app info dashscope-sdk-expert
+agenticx app verify dashscope-sdk-expert
+```
+
+`app install` 只将版本化 App 安装并登记到当前工作区的 `.agenticx/apps/`，
+不会启用 App Profile。上述 `cd` 之后，克隆仓库就是当前工作区。如需实际运行
+DashScope SDK Expert，将 Profile 合并到工作区后启动：
+
+```bash
+export DASHSCOPE_API_KEY="<your-api-key>"
+agenticx expert download dashscope-sdk-expert
+agenticx
+```
+
+Expert 下载不会登记为 App，不能用 `app list` 或 `app update` 管理。
+`app update` 从已记录的来源重新安装；更新本地克隆的 App 前，需先在克隆目录
+执行 `git pull`。
 
 源码提供 `dashscope-sdk-expert` 和 `bailian-expert` 两个 Bundle。
 安装前检查 Manifest 和请求的权限。Checksum 只能验证内容身份，不能证明发布者

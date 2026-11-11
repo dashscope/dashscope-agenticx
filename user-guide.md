@@ -3,7 +3,7 @@
 [English](user-guide.md) | [中文](user-guide_zh.md) | [README](README.md)
 
 This document contains the detailed configuration, command, tool, and Runtime
-reference moved out of the README. It describes DashScope AgenticX `1.0.0`.
+reference moved out of the README. It describes DashScope AgenticX `1.0.1`.
 Start with the
 [quick start](README.md#quick-start), and review [security](SECURITY.md)
 and [migration](migration-to-1.0.md) before installing extensions. Historical
@@ -63,7 +63,7 @@ kept; copied template files are also not rolled back.
 `dashscope/dashscope-agenticx-experts` GitHub repository by default. A
 downloaded profile that includes workspace configuration skips automatic
 `/setup` on subsequent startup. Use `/setup` to personalize that
-profile if needed. `--repo` and the global `examples_repo` configuration
+profile if needed. `--repo` and the global `expert_repo` configuration
 override the default download source.
 
 The welcome panel shows `Expert: <name>`. Downloads record this identity in
@@ -72,9 +72,7 @@ identity, or removes the record if there was none. Existing manually created
 or older profiles without this record show `Expert: (not recorded)`; AgenticX
 does not guess the role from their contents.
 
-`/expert` and `agenticx expert` are the canonical commands. `/examples`,
-`/example` and `/experts` (and their native-command equivalents) remain accepted
-as hidden aliases; help and completion advertise only `/expert`.
+`/expert` and `agenticx expert` list, download, and restore Expert profiles.
 
 ## Terminal Output
 
@@ -256,7 +254,7 @@ Commands are organized into four tiers: Session → Configuration → Capability
 | `/summarize` | Manually summarize the current task (LLM extracts key steps and lessons) and store it in experience memory; also triggered automatically for long tasks (>=6 messages) |
 | `/history [subcmd]` | Conversation history management (stats for statistics / list [n] to list / search `<keyword> [limit]` full-text search / export `<file> [--format json\|md\|html]` to export / clear to clear) |
 | `/undo` | Undo the most recent file write/delete (write_file / delete_file snapshot automatically to `.agenticx/checkpoints/` before mutating) |
-| `/session [subcmd]` | Session topic management (new [name] / list / switch `<name>` / rename `<old> <new>` / remove `<name>` / scene memory) |
+| `/session [subcmd]` | Session topic management (new [name] / list / switch `<name>` / rename `<old> <new>` / fork `<new> [src]` / remove `<name>` / scene memory) |
 | `/feedback good\|bad` | Mark task satisfaction (stored in experience memory) |
 | `/report` | Generate and display a trace data performance report (LLM call count, tool success rate, average response time) |
 | `/log [subcmd]` | View the complete LLM prompts recorded in debug mode (requires `/debug on` first; data comes from the session trace): `tail [n]` the most recent n entries (default 3) / `search <keyword>` to search / `clear` to clear; paged through less in CLI mode, shown inline with truncation in the TUI |
@@ -317,7 +315,7 @@ agenticx> /tts speed 0.9                # Set speech rate (0.5–2.0, 1.0 is nor
 | `/provider` | Q&A-style configuration wizard: Provider → model → optional connection settings → API Key |
 | `/model [name]` | Switch the model within the current provider; without an argument, shows the current model |
 | `/trust [subcmd]` | Tool trust/denial cache for the current conversation (automatically cleared at the end of each turn; asked again in the next turn) |
-| `/rule [subcmd]` | User long-lived operation rules (list / add `"<text>"` / rm N / clear); injected into the system prompt **unconditionally** every turn |
+| `/rule [subcmd]` | User long-lived operation rules (list / add `"<text>"` / rm N / clear); enabled rules are injected into the system prompt every turn |
 | `/theme [subcmd]` | Theme settings (list / set `<name>` / custom colors); built-in dark / light / monokai / dracula / nord / solarized |
 | `/privacy [on\|off\|status]` | Privacy mode |
 | `/debug [on\|off\|status]` | Debug mode: when enabled, the complete prompt (sanitized) finally sent to the LLM each turn is written to the session trace `.agenticx/traces/<session>.jsonl` as an `llm_call` event; view it with `/log` or `/trace` |
@@ -394,6 +392,14 @@ agenticx --protocol anthropic     # Use the Anthropic protocol directly at start
 agenticx --protocol openai        # Use the OpenAI protocol directly at startup (default)
 ```
 
+Other main CLI options:
+
+```bash
+agenticx -c "Summarize this project"  # Run one prompt, then exit
+agenticx --dry-run                    # Preview loaded configuration without starting
+agenticx --max-turns 20               # Override the configured conversation turn limit
+```
+
 **How protocol conversion works**:
 
 | Direction | Conversion content |
@@ -412,7 +418,7 @@ Commands corresponding to capabilities that are not enabled are intercepted by t
 | `/mcp [subcmd]` | `bailian.mcp` | MCP services (add/remove/list); requires `/capability enable bailian.mcp` first |
 | `/skill` | — | List all available skills (single-file + packages, including MCP dependency status) |
 | `/skill <name> [args]` | — | Invoke a preset Prompt |
-| `/skill install <local-dir>`|git-url|tar.gz-url|name[@version]>` | — | Install a skill package (local path / git / tar.gz URL / registry name) |
+| `/skill install <local-dir\|git-url\|tar.gz-url\|name[@version]>` | — | Install a skill package (local path / git / tar.gz URL / registry name) |
 | `/skill link <local-dir>` | — | Symlink a local skill package (development mode) |
 | `/skill update <name>` | — | Update an installed skill package |
 | `/skill update --all` | — | Update all installed skill packages |
@@ -427,11 +433,11 @@ Commands corresponding to capabilities that are not enabled are intercepted by t
 | `/app install <path>` | — | Install an App and display its permission diff |
 | `/app update <name>` | — | Update an App from its recorded source and recalculate permissions |
 | `/app verify <name>` | — | Verify App checksum and Runtime compatibility |
-| `agenticx serve --token <token>` | — | Start the localhost-only Client API for Runs, Sessions, Artifacts, and Traces |
+| `agenticx serve [--host <host>] [--port <port>] --token <token>` | — | Start the Client API for Runs, Sessions, Artifacts, and Traces (default: 127.0.0.1:8765) |
 | `/cron [subcmd]` | — | Scheduled tasks (add/list/remove/pause/resume), supporting intervals, specific times, and cron expressions |
 | `/privacy on\|off` | — | Privacy mode toggle (forces local storage, disables cloud capabilities and cron tasks) |
 | `/audit [subcmd]` | — | Audit log (recent/clear/query), records user input and tool decisions, automatically sanitized in privacy mode |
-| `/directives [subcmd]` | — | Operation rule management (list/add/rm N/clear/proposals/accept `<id>`/reject `<id>`) |
+| `/directives [subcmd]` | — | Custom directives (bare command lists; add/rm N/clear) and auto-learning proposals (proposals/accept `<id>`/reject `<id>`) |
 | `/feedback good\|bad` | — | Mark task satisfaction (stored in experience memory) |
 
 ### Development
@@ -623,7 +629,7 @@ graph TD
     %% Developer Console
     %% ========================
     subgraph Develop["Develope (universal developer console)"]
-        Ex["Examples (example generation)"]
+        Ex["Experts (Expert downloads)"]
         Conf["Config (configuration management)"]
         Dev["dev (extension wizard/debug/test)"]
     end
@@ -680,7 +686,7 @@ src/dashscope_agenticx/
 │   ├── completer.py    # Context-aware completion + sanitized storage/retrieval of command history
 │   ├── multimodal.py   # @file/directory reference expansion + image/audio multimodal content assembly
 │   ├── mcp.py          # CLI-side MCP client management (connect/reconnect/tool injection)
-│   ├── examples.py     # /expert Expert management
+│   ├── expert.py       # /expert Expert management
 │   ├── constants.py    # CLI constants and configuration data
 │   ├── startup.py      # Startup initialization (provider checks, welcome message)
 │   ├── streaming.py    # Streaming output rendering
@@ -1038,7 +1044,7 @@ agenticx> /rule rm 2
 | Dimension | `/profile` | `/rule` |
 |---|---|---|
 | Content | Identity/preferences/tech stack/project background (facts) | Operation rules, working habits, process constraints |
-| Trigger | **Keyword recall**, injected only on relevant turns | **Unconditional**, injected every turn |
+| Trigger | **Keyword recall**, injected only on relevant turns | **Enabled rules only**, injected every turn |
 | Storage | Local file (`.agenticx/memory/<user_id>.json`) | Local workspace `.agenticx/rules.jsonl` |
 | When to use | "I'm a backend developer", "The project uses Python 3.11" | "Don't push after commit", "Update README when changing code" |
 | Not suitable for | Using it the other way around: operation rules placed in profile won't be recalled because keywords don't match | Using it the other way around: stuffing lots of identity facts wastes tokens |
@@ -1050,10 +1056,10 @@ Simple rule of thumb: **use `/profile` for "who I am"; use `/rule` for "how thin
 AgenticX observes tool call sequences in the background; when the same adjacent tool pair appears more than 3 times, it automatically proposes solidifying it into a long-lived rule:
 
 ```bash
-/directives proposals          # View rule proposals pending review
-/directives accept <id>        # Accept → written to /rule, takes effect immediately
+/directives proposals          # View directive proposals pending review
+/directives accept <id>        # Accept → added to custom directives, takes effect immediately
 /directives reject <id>        # Reject
-/directives list               # View accepted directives
+/directives                    # View custom directives
 ```
 
 **How it works**:
@@ -1886,8 +1892,8 @@ Customization path after downloading: `.agenticx/system-prompt.md` defines the r
 
 > Profiles are downloaded from `apps/<name>/` in `dashscope/dashscope-agenticx-experts` on GitHub. Only the 1.0 App Catalog layout is supported; top-level legacy Expert directories are not searched. The default branch is `main`. To use another source, override the platform-standard AgenticX global configuration or pass `--repo`:
 > ```toml
-> examples_repo = "https://github.com/dashscope/dashscope-agenticx-experts.git"
-> examples_branch = "main"   # Optional, defaults to main
+> expert_repo = "https://github.com/dashscope/dashscope-agenticx-experts.git"
+> expert_branch = "main"   # Optional, defaults to main
 > ```
 
 #### basic-chat — General-purpose chat Agent (minimal viable configuration)
@@ -1927,7 +1933,7 @@ agenticx --tui                          # Full-screen TUI
 agenticx -c "What's the weather in Shanghai today?"   # one-shot (will invoke web_search)
 ```
 
-See the README of the basic-chat example for details (after `agenticx expert download basic-chat`, see `.agenticx/README.md`).
+See the README of the basic-chat Expert for details (after `agenticx expert download basic-chat`, see `.agenticx/README.md`).
 
 #### dashscope-sdk-expert — DashScope SDK technical Q&A
 
@@ -1964,7 +1970,23 @@ apps/dashscope-sdk-expert/
         └── translate.md       # Chinese-English translation
 ```
 
-**Installation and download:**
+**Install from the App Catalog:**
+
+```bash
+python -m pip install "dashscope-agenticx>=1.0.1,<2"
+git clone https://github.com/dashscope/dashscope-agenticx-experts.git
+cd dashscope-agenticx-experts
+agenticx app install ./apps/dashscope-sdk-expert
+agenticx app info dashscope-sdk-expert
+agenticx app verify dashscope-sdk-expert
+```
+
+`app install` installs and registers a managed, versioned App under the current
+workspace's `.agenticx/apps/`, but does not activate its profile. After the `cd`
+above, the cloned repository is that workspace. `app info` shows the publisher,
+permissions, Runtime compatibility range, and checksum; `app verify` checks the
+installed content checksum and Runtime compatibility. To actually run the Expert,
+merge its profile into the workspace and start AgenticX:
 
 ```bash
 pip install dashscope-agenticx
@@ -1977,11 +1999,15 @@ agenticx --tui                                    # Full-screen TUI
 agenticx -c "How do I use Generation.call?"       # one-shot
 ```
 
+Expert downloads are not registered as Apps and cannot be managed with `app
+list` or `app update`. `app update` reinstalls from the source recorded during
+installation; run `git pull` in the clone before updating a locally cloned App.
+
 View available Expert templates: `agenticx expert`
 
 **Reuse pattern:** use `agenticx expert download <name>` to initialize your project workspace, edit `.agenticx/system-prompt.md` to define your Agent's role, replace the skill templates under `.agenticx/skills/`, and use `.agenticx/build_sdk_index.py` as a starting point to build your own domain knowledge index (placed in `.agenticx/references/`). All the intelligence lives in the `.agenticx/` configuration; just run `agenticx` to start.
 
-Each example is a pure configuration directory: `.agenticx/` configuration + README documentation, with no Python bootstrap code whatsoever.
+Each Expert is a pure configuration directory: `.agenticx/` configuration + README documentation, with no Python bootstrap code whatsoever.
 
 ---
 

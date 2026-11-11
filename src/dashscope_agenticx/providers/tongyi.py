@@ -10,8 +10,8 @@ from typing import AsyncIterator, ClassVar
 
 import httpx
 
-from dashscope_agenticx import SDK_SESSION_ID, __version__
 from dashscope_agenticx.config import DEFAULT_MODEL, normalize_model_name
+from dashscope_agenticx.dashscope_headers import dashscope_sdk_headers
 from dashscope_agenticx.providers.base import LLMChunk, LLMResponse, ToolCall
 
 # Service root; the provider appends the native generation path. This is
@@ -425,12 +425,9 @@ class TongyiProvider:
             headers["Accept"] = "text/event-stream"
             headers["X-Accel-Buffering"] = "no"
             headers["X-DashScope-SSE"] = "enable"
-        if not os.environ.get("DASHSCOPE_DISABLE_SDK_HEADERS"):
-            parts = ["dashscope-agenticx", __version__]
-            if self.module:
-                parts.append(self.module)
-            headers["x-dashscope-sdk-client"] = "/".join(parts)
-            headers["x-dashscope-sdk-session-id"] = SDK_SESSION_ID
+        headers.update(
+            dashscope_sdk_headers(self.module, base_url=self.base_url),
+        )
         return headers
 
     async def chat(

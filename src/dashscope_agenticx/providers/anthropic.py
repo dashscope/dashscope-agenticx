@@ -7,6 +7,7 @@ from typing import AsyncIterator
 
 import httpx
 
+from dashscope_agenticx.dashscope_headers import dashscope_sdk_headers
 from dashscope_agenticx.providers.base import LLMChunk, LLMResponse, ToolCall
 
 try:
@@ -57,6 +58,7 @@ class AnthropicProvider:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: float = 120.0,
+        module: str = "app",
     ):
         if anthropic is None:
             raise ImportError(
@@ -70,6 +72,10 @@ class AnthropicProvider:
             api_key=api_key,
             base_url=base_url,
             timeout=timeout,
+            default_headers=dashscope_sdk_headers(
+                module,
+                base_url=base_url or "",
+            ),
         )
 
     async def aclose(self) -> None:

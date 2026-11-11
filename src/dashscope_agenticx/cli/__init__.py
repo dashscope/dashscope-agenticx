@@ -54,8 +54,8 @@ from dashscope_agenticx.cli.dispatch import (  # noqa: F401,E402
     _handle_slash_command,
     dispatch_async_command,
 )
-from dashscope_agenticx.cli.examples import (  # noqa: E402
-    _handle_example_command,
+from dashscope_agenticx.cli.experts import (  # noqa: E402
+    _handle_expert_command,
 )
 from dashscope_agenticx.cli.handlers_capability import (  # noqa: F401,E402
     _cap_enabled,
@@ -241,8 +241,8 @@ def main():
             )
             asyncio.run(_run_oneshot(config, prompt))
             return
-        elif arg in ("expert", "experts", "example", "examples"):
-            _handle_example_command(sys.argv[2:])
+        elif arg == "expert":
+            _handle_expert_command(sys.argv[2:])
             return
         elif arg == "mcp-server":
             from dashscope_agenticx.mcp_server import main as _mcp_server_main

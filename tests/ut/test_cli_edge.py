@@ -27,7 +27,7 @@ from dashscope_agenticx.cli.completer import (
 from dashscope_agenticx.cli.constants import (
     ALL_CAPABILITY_KEYS,
     CAPABILITY_CATALOG,
-    EXPERT_COMMAND_ALIASES,
+    EXPERT_COMMANDS,
 )
 from dashscope_agenticx.config import Config
 from dashscope_agenticx.executor import Executor
@@ -1450,7 +1450,7 @@ def _doc(text):
 
 
 class TestExpertCommands:
-    @pytest.mark.parametrize("command", EXPERT_COMMAND_ALIASES)
+    @pytest.mark.parametrize("command", EXPERT_COMMANDS)
     def test_native_alias_routes_without_starting_agent(
         self,
         monkeypatch,
@@ -1462,7 +1462,7 @@ class TestExpertCommands:
             "argv",
             ["agenticx", command[1:], "download", "basic-chat"],
         )
-        monkeypatch.setattr(cli_pkg, "_handle_example_command", handler)
+        monkeypatch.setattr(cli_pkg, "_handle_expert_command", handler)
         monkeypatch.setattr(
             Config,
             "load",
@@ -1473,11 +1473,22 @@ class TestExpertCommands:
 
         handler.assert_called_once_with(["download", "basic-chat"])
 
-    @pytest.mark.parametrize("command", EXPERT_COMMAND_ALIASES)
+    @pytest.mark.parametrize("command", ["experts", "example", "examples"])
+    def test_removed_native_aliases_are_rejected(self, monkeypatch, command):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["agenticx", command, "download", "basic-chat"],
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            cli_pkg.main()
+        assert exc_info.value.code == 2
+
+    @pytest.mark.parametrize("command", EXPERT_COMMANDS)
     def test_slash_alias_routes(self, monkeypatch, command):
         handler = MagicMock()
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._handle_example_command",
+            "dashscope_agenticx.cli.experts._handle_expert_command",
             handler,
         )
 
@@ -1491,16 +1502,24 @@ class TestExpertCommands:
         )
         handler.assert_called_once_with(["download", "basic-chat"])
 
-    def test_similar_prefix_is_not_an_expert_command(self, monkeypatch):
+    @pytest.mark.parametrize(
+        "command",
+        ["/experts", "/example", "/examples", "/examples-extra"],
+    )
+    def test_removed_alias_or_similar_prefix_is_not_an_expert_command(
+        self,
+        monkeypatch,
+        command,
+    ):
         handler = MagicMock()
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._handle_example_command",
+            "dashscope_agenticx.cli.experts._handle_expert_command",
             handler,
         )
 
         assert (
             dp._handle_slash_command(
-                "/examples-extra list",
+                f"{command} list",
                 MagicMock(),
                 Config(),
             )
@@ -1516,11 +1535,12 @@ class TestExpertCommands:
         native_help = capsys.readouterr().out
         assert "expert download" in native_help
         assert "expert restore" in native_help
-        assert "example download" not in native_help
+        for alias in ("experts", "example", "examples"):
+            assert f"{alias} download" not in native_help
         slash_help = render_help_text()
         assert "/expert download" in slash_help
         assert "/expert restore" in slash_help
-        for alias in EXPERT_COMMAND_ALIASES[1:]:
+        for alias in ("/experts", "/example", "/examples"):
             assert alias not in slash_help
 
 
@@ -1530,9 +1550,9 @@ class TestCompleter:
         out = [c.text for c in comp.get_completions(_doc("/"), None)]
         assert "/help" in out and "/exit" in out
         assert "/expert" in out
-        assert not set(EXPERT_COMMAND_ALIASES[1:]) & set(out)
+        assert not {"/experts", "/example", "/examples"} & set(out)
 
-    @pytest.mark.parametrize("command", EXPERT_COMMAND_ALIASES)
+    @pytest.mark.parametrize("command", EXPERT_COMMANDS)
     def test_expert_submenus(self, command):
         comp = AcliCompleter(Config())
         out = [
@@ -1541,14 +1561,14 @@ class TestCompleter:
         ]
         assert out == ["list", "download", "restore"]
 
-    @pytest.mark.parametrize("command", EXPERT_COMMAND_ALIASES)
+    @pytest.mark.parametrize("command", EXPERT_COMMANDS)
     def test_expert_download_name_completion_is_local(
         self,
         monkeypatch,
         command,
     ):
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._list_remote_examples",
+            "dashscope_agenticx.cli.experts._list_remote_experts",
             MagicMock(
                 side_effect=AssertionError(
                     "completion must not access network",

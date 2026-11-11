@@ -115,7 +115,7 @@ def _print_banner(config: Config | None = None) -> None:
 
     # ── Startup info: provider / model / user / capabilities / tools ──
     if config is not None:
-        from dashscope_agenticx.cli.examples import _selected_expert
+        from dashscope_agenticx.cli.experts import _selected_expert
 
         user_display = config.user_name or "(not set)"
         console.print(

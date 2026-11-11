@@ -9,6 +9,8 @@ from urllib.parse import urljoin
 
 import httpx
 
+from dashscope_agenticx.dashscope_headers import dashscope_sdk_headers
+
 BAILIAN_MCP_BASE = "https://dashscope.aliyuncs.com/api/v1/mcps"
 MCP_PROTOCOL_VERSION = "2024-11-05"
 
@@ -36,6 +38,7 @@ class MCPClient:
         self._api_key = api_key
         self._headers = {
             "Authorization": f"Bearer {api_key}",
+            **dashscope_sdk_headers("mcp", base_url=self._base_url),
         }
         self._client: httpx.AsyncClient | None = None
         self._request_id = 0

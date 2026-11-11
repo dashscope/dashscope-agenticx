@@ -15,7 +15,7 @@ from dashscope_agenticx.cli.command_registry import CommandContext
 from dashscope_agenticx.cli.command_registry import (
     registry as command_registry,
 )
-from dashscope_agenticx.cli.constants import EXPERT_COMMAND_ALIASES
+from dashscope_agenticx.cli.constants import EXPERT_COMMANDS
 from dashscope_agenticx.cli.handlers_config import (
     _handle_debug_command,
     _handle_directives_command,
@@ -467,11 +467,11 @@ def _dispatch_slash_command(
     elif cmd.startswith("/directives"):
         _handle_directives_command(cmd, config)
         return True
-    elif cmd and cmd.split(maxsplit=1)[0] in EXPERT_COMMAND_ALIASES:
-        from dashscope_agenticx.cli.examples import _handle_example_command
+    elif cmd and cmd.split(maxsplit=1)[0] in EXPERT_COMMANDS:
+        from dashscope_agenticx.cli.experts import _handle_expert_command
 
         args = cmd.split()[1:]
-        _handle_example_command(args)
+        _handle_expert_command(args)
         return True
     elif cmd.startswith("/audit"):
         from dashscope_agenticx.audit import get_audit_logger

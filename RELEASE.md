@@ -1,6 +1,6 @@
 # Release Process
 
-The release version is `1.0.0`. Updating the version and pushing or merging
+The release version is `1.0.1`. Updating the version and pushing or merging
 Git branches does not publish packages or create release tags. External
 publication requires the checks and explicit approval below.
 
@@ -15,7 +15,7 @@ publication requires the checks and explicit approval below.
    metadata, and `agenticx --version` agree.
 6. Only when external publication is explicitly approved, tag `v<version>` and
    publish the `dashscope-agenticx` wheel/sdist plus checksums and SBOM.
-7. Archive the migration guide and final benchmark/eval reports for `1.0.0`.
+7. Archive the migration guide and final benchmark/eval reports for `1.0.1`.
 
 Main-branch pushes and pull requests run unit tests and pre-commit checks.
 Before pushing a release tag, confirm the tagged source passed those checks.

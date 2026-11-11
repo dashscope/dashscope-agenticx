@@ -3,7 +3,7 @@
 [English](user-guide.md) | [中文](user-guide_zh.md) | [README](README_zh.md)
 
 本手册承接原 README 的详细配置、命令、工具与 Runtime 参考，面向
-DashScope AgenticX `1.0.0`。首次使用请先阅读
+DashScope AgenticX `1.0.1`。首次使用请先阅读
 [快速开始](README_zh.md#快速开始)，安装扩展前检查[安全策略](SECURITY.md)
 和[迁移指南](migration-to-1.0.md)。版本更新记录统一保留在
 [CHANGELOG.md](CHANGELOG.md)，不放入使用手册。
@@ -49,15 +49,14 @@ Provider/模型和 API Key 时跳过自动初始化；随时可运行 `/setup` �
 `agenticx expert download basic-chat` 默认从公开 GitHub 仓库
 `dashscope/dashscope-agenticx-experts` 下载。如果下载的 profile 自带 workspace
 配置，下一次启动不会再次自动进入 `/setup`；需要时手动运行 `/setup`
-修改人设和配置。`--repo` 和全局 `examples_repo` 配置可覆盖默认下载来源。
+修改人设和配置。`--repo` 和全局 `expert_repo` 配置可覆盖默认下载来源。
 
 欢迎页显示 `Expert: <名称>`。下载时将身份记录到 `.agenticx/expert.toml`；
 恢复合并备份时也会还原之前的身份，之前没有记录则移除新增记录。
 手工创建或旧版下载的 profile 若没有这份记录，显示 `Expert: (not recorded)`，
 不会根据配置内容猜测 Expert 名称。
 
-统一入口为 `/expert` 和 `agenticx expert`。`/examples`、`/example`、`/experts`
-及对应终端命令仍可用作隐藏别名，帮助和一级补全只展示 `/expert`。
+统一入口为 `/expert` 和 `agenticx expert`，用于列出、下载和恢复 Expert Profile。
 
 ## 终端输出
 
@@ -173,7 +172,7 @@ auth          = false                # 无需 API Key（本地部署）
 # protocol      = "openai_compatible"  # 等价于 openai
 ```
 
-`workspace` 覆盖全局同名 `name` 条目；最小模板见 basic-chat 示例（`agenticx expert download basic-chat` 后查看 `.agenticx/custom-extensions.toml`）。
+`workspace` 覆盖全局同名 `name` 条目；最小模板见 basic-chat Expert（`agenticx expert download basic-chat` 后查看 `.agenticx/custom-extensions.toml`）。
 
 **base_url 的配置入口与解析优先级**
 
@@ -239,7 +238,7 @@ API Key [Enter to skip]:
 | `/summarize` | 手动总结当前任务（LLM 提取关键步骤与教训），存入经验记忆；长任务（>=6 条消息）也会自动触发 |
 | `/history [subcmd]` | 对话历史管理（stats 统计 / list [n] 列出 / search `<关键词> [limit]` 全文检索 / export `<file> [--format json\|md\|html]` 导出 / clear 清空） |
 | `/undo` | 撤销最近一次文件写入/删除（write_file / delete_file 改动前自动快照到 `.agenticx/checkpoints/`） |
-| `/session [subcmd]` | 会话主题管理（new [name] / list / switch `<name>` / rename `<old> <new>` / remove `<name>` / scene 场景记忆） |
+| `/session [subcmd]` | 会话主题管理（new [name] / list / switch `<name>` / rename `<old> <new>` / fork `<new> [src]` / remove `<name>` / scene 场景记忆） |
 | `/feedback good\|bad` | 标注任务满意度（存入经验记忆） |
 | `/report` | 生成并展示 trace 数据性能报告（LLM 调用次数、工具成功率、平均响应时间） |
 | `/log [subcmd]` | 查看调试模式记录的完整 LLM prompt（需先 `/debug on`，数据来自会话 trace）：`tail [n]` 最近 n 条（默认 3）/ `search <关键词>` 搜索 / `clear` 清空；CLI 模式经 less 分页，TUI 内联截断显示 |
@@ -300,7 +299,7 @@ agenticx> /tts speed 0.9                # 设置语速（0.5–2.0，1.0 为正�
 | `/provider` | 问答式配置向导：Provider → 模型 → 可选连接设置 → API Key |
 | `/model [name]` | 切换当前 Provider 下的模型；不带参数显示当前模型 |
 | `/trust [subcmd]` | 本次对话工具授信/拒绝缓存（每轮结束自动清空，下一轮重新问） |
-| `/rule [subcmd]` | 用户长效操作规则（list / add `"<text>"` / rm N / clear）；每轮**无条件**注入 system prompt |
+| `/rule [subcmd]` | 用户长效操作规则（list / add `"<text>"` / rm N / clear）；每轮将**已启用**的规则注入 system prompt |
 | `/theme [subcmd]` | 主题设置（list / set `<name>` / 自定义颜色）；内置 dark / light / monokai / dracula / nord / solarized |
 | `/privacy [on\|off\|status]` | 隐私模式 |
 | `/debug [on\|off\|status]` | 调试模式：开启后每轮最终发送给 LLM 的完整 prompt（脱敏后）随 `llm_call` 事件写入会话 trace `.agenticx/traces/<session>.jsonl`，用 `/log` 或 `/trace` 查看 |
@@ -370,6 +369,14 @@ agenticx --protocol anthropic     # 启动时直接使用 Anthropic 协议
 agenticx --protocol openai        # 启动时直接使用 OpenAI 协议（默认）
 ```
 
+其他主要 CLI 参数：
+
+```bash
+agenticx -c "概述当前项目"      # 执行一次请求后退出
+agenticx --dry-run              # 预览已加载配置，不启动 Agent
+agenticx --max-turns 20         # 覆盖配置中的对话轮次上限
+```
+
 **协议转换原理**：
 
 | 方向 | 转换内容 |
@@ -388,7 +395,7 @@ agenticx --protocol openai        # 启动时直接使用 OpenAI 协议（默认
 | `/mcp [subcmd]` | `bailian.mcp` | MCP 服务 (add/remove/list)；需先 `/capability enable bailian.mcp` |
 | `/skill` | — | 列出所有可用 skill（单文件 + 包，含 MCP 依赖状态） |
 | `/skill <name> [args]` | — | 调用预置 Prompt |
-| `/skill install <local-dir>`|git-url|tar.gz-url|name[@version]>` | — | 安装 skill 包（本地路径 / git / tar.gz URL / registry 名称） |
+| `/skill install <local-dir\|git-url\|tar.gz-url\|name[@version]>` | — | 安装 skill 包（本地路径 / git / tar.gz URL / registry 名称） |
 | `/skill link <local-dir>` | — | 软链接本地 skill 包（开发模式） |
 | `/skill update <name>` | — | 更新已安装的 skill 包 |
 | `/skill update --all` | — | 更新所有已安装的 skill 包 |
@@ -403,11 +410,11 @@ agenticx --protocol openai        # 启动时直接使用 OpenAI 协议（默认
 | `/app install <path>` | — | 安装 App，并显示权限差异 |
 | `/app update <name>` | — | 从已记录来源更新 App，重新计算权限差异 |
 | `/app verify <name>` | — | 验证 App 校验和和 Runtime 兼容性 |
-| `agenticx serve --token <token>` | — | 启动仅监听 localhost 的 Client API（Run / Session / Artifact / Trace） |
+| `agenticx serve [--host <host>] [--port <port>] --token <token>` | — | 启动 Client API（Run / Session / Artifact / Trace），默认监听 127.0.0.1:8765 |
 | `/cron [subcmd]` | — | 定时任务 (add/list/remove/pause/resume)，支持间隔、指定时间、cron 表达式 |
 | `/privacy on\|off` | — | 隐私模式开关（强制本地存储，禁用云端能力与 cron 任务） |
 | `/audit [subcmd]` | — | 审计日志 (recent/clear/query)，记录用户输入与工具决策，隐私模式下自动脱敏 |
-| `/directives [subcmd]` | — | 操作规则管理 (list/add/rm N/clear/proposals/accept `<id>`/reject `<id>`) |
+| `/directives [subcmd]` | — | 自定义指令（裸命令列出；add/rm N/clear）与自动学习提议（proposals/accept `<id>`/reject `<id>`） |
 | `/feedback good\|bad` | — | 标注任务满意度（存入经验记忆） |
 
 ### 开发
@@ -609,7 +616,7 @@ graph TD
     %% Developer Console
     %% ========================
     subgraph Develop["Develope (普世化 开发控制台)"]
-        Ex["Examples (示例生成)"]
+        Ex["Experts (Expert 下载)"]
         Conf["Config (配置管理)"]
         Dev["dev (扩展向导/调试/测试)"]
     end
@@ -666,7 +673,7 @@ src/dashscope_agenticx/
 │   ├── completer.py    # 上下文感知补全 + 命令历史脱敏存取
 │   ├── multimodal.py   # @文件/目录引用展开 + 图片/音频多模态内容组装
 │   ├── mcp.py          # CLI 侧 MCP 客户端管理（连接/重连/工具注入）
-│   ├── examples.py     # /expert Expert 管理
+│   ├── expert.py       # /expert Expert 管理
 │   ├── constants.py    # CLI 常量与配置数据
 │   ├── startup.py      # 启动初始化（provider 检查、欢迎语）
 │   ├── streaming.py    # 流式输出渲染
@@ -1025,7 +1032,7 @@ agenticx> /rule rm 2
 | 维度 | `/profile` | `/rule` |
 |---|---|---|
 | 内容 | 身份/偏好/技术栈/项目背景（事实） | 操作规则、做事习惯、流程约束 |
-| 触发 | **关键词召回**，仅相关 turn 注入 | **无条件**，每轮都注入 |
+| 触发 | **关键词召回**，仅相关 turn 注入 | **仅已启用规则**，每轮都注入 |
 | 存储 | 本地文件（`.agenticx/memory/<user_id>.json`） | 本地 workspace `.agenticx/rules.jsonl` |
 | 何时用 | "我是后端开发"、"项目用 Python 3.11" | "commit 后别 push"、"改代码改 README" |
 | 不适合 | 反过来用：操作规则放 profile 会因为关键词不匹配而召不回 | 反过来用：放大量身份事实会浪费 token |
@@ -1037,10 +1044,10 @@ agenticx> /rule rm 2
 AgenticX 在后台观察工具调用序列，当同一相邻工具对出现 3 次以上时，自动提议将其固化为长效规则：
 
 ```bash
-/directives proposals          # 查看待审规则提议
-/directives accept <id>        # 接受 → 写入 /rule，立即生效
+/directives proposals          # 查看待审指令提议
+/directives accept <id>        # 接受 → 加入自定义指令，立即生效
 /directives reject <id>        # 拒绝
-/directives list               # 查看已接受的指令
+/directives                    # 查看自定义指令
 ```
 
 **工作原理**：
@@ -1873,8 +1880,8 @@ agenticx                                 # 启动 —— 已是 Expert 定义的
 
 > Profile 默认从 GitHub 的 `dashscope/dashscope-agenticx-experts` 仓库中 `apps/<name>/` 下载，只支持 1.0 App Catalog 布局，不再查找顶层旧Expert目录，默认分支为 `main`。如需其他来源，可覆盖平台标准位置的 AgenticX 全局配置，或传入 `--repo`：
 > ```toml
-> examples_repo = "https://github.com/dashscope/dashscope-agenticx-experts.git"
-> examples_branch = "main"   # 可选，默认 main
+> expert_repo = "https://github.com/dashscope/dashscope-agenticx-experts.git"
+> expert_branch = "main"   # 可选，默认 main
 > ```
 
 #### basic-chat — 通用聊天 Agent（最小可用配置）
@@ -1951,7 +1958,22 @@ apps/dashscope-sdk-expert/
         └── translate.md       # 中英互译
 ```
 
-**安装与下载：**
+**通过 App Catalog 安装：**
+
+```bash
+python -m pip install "dashscope-agenticx>=1.0.1,<2"
+git clone https://github.com/dashscope/dashscope-agenticx-experts.git
+cd dashscope-agenticx-experts
+agenticx app install ./apps/dashscope-sdk-expert
+agenticx app info dashscope-sdk-expert
+agenticx app verify dashscope-sdk-expert
+```
+
+`app install` 将受管理的版本化 App 安装并登记到当前工作区的
+`.agenticx/apps/`，但不会启用其 Profile。上述 `cd` 之后，克隆仓库就是当前
+工作区。`app info` 查看发布者、权限、Runtime 兼容范围与校验和，`app verify`
+检查已安装内容的校验和及 Runtime 兼容性。如需实际运行 Expert，将 Profile
+合并到工作区后启动：
 
 ```bash
 pip install dashscope-agenticx
@@ -1963,6 +1985,10 @@ agenticx                                          # 交互式 REPL
 agenticx --tui                                    # 全屏 TUI
 agenticx -c "Generation.call 怎么用？"            # one-shot
 ```
+
+Expert 下载不会登记为 App，不能用 `app list` 或 `app update` 管理。
+`app update` 从安装时记录的来源重新安装；更新本地克隆的 App 前，需先在克隆
+目录执行 `git pull`。
 
 查看可用 Expert 模板：`agenticx expert`
 

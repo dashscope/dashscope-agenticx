@@ -155,6 +155,52 @@ class TestTTSPlayerConfig:
         assert player.speech_rate == 1.25
 
 
+class TestTTSSDKClient:
+    def test_marks_sdk_client_before_synthesizer(self, monkeypatch, player):
+        events: list[str] = []
+
+        class FakeResultCallback:
+            pass
+
+        class FakeAudioFormat:
+            WAV_16000HZ_MONO_16BIT = "wav"
+
+        class FakeSpeechSynthesizer:
+            def __init__(self, **kwargs):
+                events.append("synthesizer")
+                self._callback = kwargs["callback"]
+
+            def streaming_call(self, text):
+                self._callback.on_error("stop")
+
+            def streaming_complete(self):
+                pass
+
+        monkeypatch.setenv("DASHSCOPE_API_KEY", "sk-test")
+        monkeypatch.setattr(
+            tts,
+            "mark_dashscope_sdk_client",
+            lambda: events.append("mark"),
+        )
+        monkeypatch.setattr(
+            "dashscope.audio.tts_v2.AudioFormat",
+            FakeAudioFormat,
+        )
+        monkeypatch.setattr(
+            "dashscope.audio.tts_v2.ResultCallback",
+            FakeResultCallback,
+        )
+        monkeypatch.setattr(
+            "dashscope.audio.tts_v2.SpeechSynthesizer",
+            FakeSpeechSynthesizer,
+        )
+
+        error = player._synthesize_and_play("你好")
+
+        assert error == "TTS synthesis failed: stop"
+        assert events == ["mark", "synthesizer"]
+
+
 class TestSpeakEarlyReturns:
     def test_missing_deps_returns_error(self, player, monkeypatch):
         monkeypatch.setattr(tts, "is_available", lambda: (False, "缺依赖"))
