@@ -184,7 +184,7 @@ _AT_AUDIO_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 _MEDIA_SENTINEL_RE = re.compile(r"<<__AGENTICX_(IMG|AUDIO)_(\d+)__>>")
 
 # Top-level slash commands
-EXPERT_COMMAND_ALIASES = ("/expert", "/experts", "/example", "/examples")
+EXPERT_COMMANDS = ("/expert",)
 
 _TOP_LEVEL_COMMANDS = [
     "/help",
@@ -232,9 +232,6 @@ _TOP_LEVEL_COMMANDS = [
 # Static second-level subcommands
 _SUBCOMMANDS: dict[str, list[str]] = {
     "/expert": ["list", "download", "restore"],
-    "/experts": ["list", "download", "restore"],
-    "/example": ["list", "download", "restore"],
-    "/examples": ["list", "download", "restore"],
     "/capability": ["list", "enable", "disable", "reload", "config"],
     "/subagents": ["list", "reload", "enable", "disable", "config"],
     "/trust": ["list", "clear", "allow", "deny"],

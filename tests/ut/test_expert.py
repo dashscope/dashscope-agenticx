@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Tests for dashscope_agenticx.cli.examples — _KNOWN_EXAMPLES, _get_examples_dir,
-_list_examples, _print_example_list, _handle_example_command."""
+"""Tests for dashscope_agenticx.cli.experts — _KNOWN_EXPERTS, _get_experts_dir,
+_list_experts, _print_expert_list, _handle_expert_command."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def test_expert_templates_cannot_install_executable_extensions(
     content,
     force,
 ):
-    from dashscope_agenticx.cli.examples import _copy_example_flat
+    from dashscope_agenticx.cli.experts import _copy_expert_flat
 
     source = tmp_path / "source" / ".agenticx"
     path = source / relative
@@ -40,7 +40,7 @@ def test_expert_templates_cannot_install_executable_extensions(
     path.write_text(content)
     destination = tmp_path / "workspace"
     with pytest.raises(ValueError, match="templates cannot"):
-        _copy_example_flat(source.parent, destination, force=force)
+        _copy_expert_flat(source.parent, destination, force=force)
     assert not destination.exists()
 
 
@@ -89,7 +89,7 @@ def test_setup_template_preserves_config_and_merges_declarations(
     )
     (workspace_dir / "custom-extensions.toml").write_text(existing)
 
-    assert _copy_example_flat(
+    assert _copy_expert_flat(
         source,
         destination,
         force=True,
@@ -150,7 +150,7 @@ def test_setup_template_invalid_extensions_do_not_modify_workspace(
     (workspace_dir / "system-prompt.md").write_text("Old role")
 
     with pytest.raises(ValueError):
-        _copy_example_flat(
+        _copy_expert_flat(
             source,
             destination,
             force=True,
@@ -181,7 +181,7 @@ def test_setup_template_conflict_defaults_to_cancel(
         lambda prompt: prompts.append(prompt) or "",
     )
 
-    assert not _copy_example_flat(
+    assert not _copy_expert_flat(
         source,
         destination,
         force=False,
@@ -194,19 +194,19 @@ def test_setup_template_conflict_defaults_to_cancel(
     assert (workspace_dir / "system-prompt.md").read_text() == "Old role"
 
 
-from dashscope_agenticx.cli.examples import (
-    _DEFAULT_EXAMPLES_BRANCH,
-    _DEFAULT_EXAMPLES_REPO,
-    _KNOWN_EXAMPLES,
-    _get_examples_dir,
+from dashscope_agenticx.cli.experts import (
+    _DEFAULT_EXPERT_BRANCH,
+    _DEFAULT_EXPERTS_REPO,
+    _KNOWN_EXPERTS,
+    _get_experts_dir,
     _get_configured_repo,
-    _handle_example_command,
-    _clone_example_to_temp,
-    _copy_example_flat,
-    _list_examples,
-    _list_remote_examples,
-    _print_example_list,
-    _restore_example_backup,
+    _handle_expert_command,
+    _clone_expert_to_temp,
+    _copy_expert_flat,
+    _list_experts,
+    _list_remote_experts,
+    _print_expert_list,
+    _restore_expert_backup,
     _selected_expert,
 )
 
@@ -214,13 +214,13 @@ from dashscope_agenticx.cli.examples import (
 @pytest.fixture(autouse=True)
 def disable_remote_catalog_queries(monkeypatch):
     monkeypatch.setattr(
-        "dashscope_agenticx.cli.examples._list_remote_examples",
+        "dashscope_agenticx.cli.experts._list_remote_experts",
         lambda repo, branch: [],
     )
 
 
 class TestExpertIdentity:
-    @pytest.mark.parametrize("name", _KNOWN_EXAMPLES)
+    @pytest.mark.parametrize("name", _KNOWN_EXPERTS)
     def test_explicit_name_overrides_bundled_identity(self, tmp_path, name):
         source = tmp_path / "template" / ".agenticx"
         source.mkdir(parents=True)
@@ -228,7 +228,7 @@ class TestExpertIdentity:
         (source / "system-prompt.md").write_text("Template role")
         destination = tmp_path / "workspace"
 
-        assert _copy_example_flat(
+        assert _copy_expert_flat(
             source.parent,
             destination,
             force=True,
@@ -295,7 +295,7 @@ class TestExpertIdentity:
         monkeypatch.setattr("sys.stdin.isatty", lambda: True)
         monkeypatch.setattr("builtins.input", lambda prompt: "n")
 
-        assert not _copy_example_flat(
+        assert not _copy_expert_flat(
             source,
             destination,
             force=False,
@@ -325,7 +325,7 @@ class TestExpertIdentity:
         link.symlink_to(outside)
 
         with pytest.raises(ValueError, match="symbolic links"):
-            _copy_example_flat(
+            _copy_expert_flat(
                 source,
                 destination,
                 force=True,
@@ -349,14 +349,14 @@ class TestExpertIdentity:
         if recorded:
             (workspace / "expert.toml").write_text('name = "old-expert"\n')
 
-        assert _copy_example_flat(
+        assert _copy_expert_flat(
             source,
             destination,
             force=True,
             expert_name="new-expert",
         )
         assert _selected_expert(workspace) == "new-expert"
-        assert _restore_example_backup(destination)
+        assert _restore_expert_backup(destination)
         assert _selected_expert(workspace) == (
             "old-expert" if recorded else ""
         )
@@ -374,7 +374,7 @@ class TestExpertIdentity:
         (workspace / "expert.toml").write_text('name = "old-expert"\n')
 
         with pytest.raises(ValueError):
-            _copy_example_flat(
+            _copy_expert_flat(
                 source,
                 destination,
                 force=True,
@@ -386,21 +386,21 @@ class TestExpertIdentity:
 
 
 # ---------------------------------------------------------------------------
-# _KNOWN_EXAMPLES
+# _KNOWN_EXPERTS
 # ---------------------------------------------------------------------------
 
 
-class TestKnownExamples:
+class TestKnownExpert:
     def test_contains_all_apps(self):
         expected = {
             "basic-chat",
             "dashscope-sdk-expert",
             "bailian-expert",
         }
-        assert set(_KNOWN_EXAMPLES) == expected
+        assert set(_KNOWN_EXPERTS) == expected
 
     def test_has_three_entries(self):
-        assert len(_KNOWN_EXAMPLES) == 3
+        assert len(_KNOWN_EXPERTS) == 3
 
     @pytest.mark.parametrize(
         "name",
@@ -410,96 +410,92 @@ class TestKnownExamples:
             "bailian-expert",
         ],
     )
-    def test_each_example_present(self, name):
-        assert name in _KNOWN_EXAMPLES
+    def test_each_expert_present(self, name):
+        assert name in _KNOWN_EXPERTS
 
     def test_is_list_of_strings(self):
-        assert isinstance(_KNOWN_EXAMPLES, list)
-        assert all(isinstance(e, str) for e in _KNOWN_EXAMPLES)
+        assert isinstance(_KNOWN_EXPERTS, list)
+        assert all(isinstance(e, str) for e in _KNOWN_EXPERTS)
 
     def test_no_duplicates(self):
-        assert len(_KNOWN_EXAMPLES) == len(set(_KNOWN_EXAMPLES))
+        assert len(_KNOWN_EXPERTS) == len(set(_KNOWN_EXPERTS))
 
 
 # ---------------------------------------------------------------------------
-# _get_examples_dir
+# _get_experts_dir
 # ---------------------------------------------------------------------------
 
 
-class TestGetExamplesDir:
+class TestGetExpertDir:
     def test_returns_path(self):
-        result = _get_examples_dir()
+        result = _get_experts_dir()
         assert isinstance(result, Path)
 
     def test_returns_path_even_if_not_exists(self):
         """The function should always return a Path, even if the directory
         does not exist on disk."""
         with patch.object(Path, "is_dir", return_value=False):
-            result = _get_examples_dir()
+            result = _get_experts_dir()
         assert isinstance(result, Path)
 
     def test_dev_mode_path_checked_first(self):
         """Local downloads use the canonical apps directory."""
         fake_root = Path("/fake/project/root")
-        dev_examples = fake_root / "apps"
+        dev_expert = fake_root / "apps"
 
-        # Simulate: __file__ is at .../src/dashscope_agenticx/cli/examples.py
+        # Simulate: __file__ is at .../src/dashscope_agenticx/cli/expert.py
         # project_root = parent.parent.parent.parent
         with patch.object(Path, "resolve") as mock_resolve:
             mock_resolve.return_value = (
-                fake_root
-                / "src"
-                / "dashscope_agenticx"
-                / "cli"
-                / "examples.py"
+                fake_root / "src" / "dashscope_agenticx" / "cli" / "expert.py"
             )
             with patch.object(Path, "is_dir", return_value=True):
-                result = _get_examples_dir()
-            assert result == dev_examples
+                result = _get_experts_dir()
+            assert result == dev_expert
 
 
 # ---------------------------------------------------------------------------
-# _list_examples
+# _list_experts
 # ---------------------------------------------------------------------------
 
 
-class TestListExamples:
+class TestListExpert:
     def test_returns_list(self):
-        result = _list_examples()
+        result = _list_experts()
         assert isinstance(result, list)
 
     def test_returns_sorted_list(self):
-        result = _list_examples()
+        result = _list_experts()
         if len(result) > 1:
             assert result == sorted(result)
 
     def test_all_entries_are_strings(self):
-        result = _list_examples()
+        result = _list_experts()
         assert all(isinstance(e, str) for e in result)
 
     def test_excludes_hidden_directories(self, tmp_path):
         """Directories starting with . or _ should be excluded."""
-        (tmp_path / "valid-example").mkdir()
+        (tmp_path / "valid-expert").mkdir()
         (tmp_path / ".hidden").mkdir()
         (tmp_path / "_private").mkdir()
 
         with patch(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
+            "dashscope_agenticx.cli.experts._get_experts_dir",
             return_value=tmp_path,
         ):
-            result = _list_examples()
-        assert "valid-example" in result
+            result = _list_experts()
+        assert "valid-expert" in result
         assert ".hidden" not in result
         assert "_private" not in result
 
     def test_empty_when_dir_missing(self):
-        """When the examples directory does not exist, return empty list."""
+        """When the expert directory does not exist, return empty list."""
         nonexistent = Path("/nonexistent/path/that/should/not/exist")
         with patch(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
+            "dashscope_agenticx.cli.experts._get_experts_dir",
             return_value=nonexistent,
         ):
-            result = _list_examples()
+            result = _list_experts()
         assert result == []
 
     def test_only_directories_listed(self, tmp_path):
@@ -508,91 +504,91 @@ class TestListExamples:
         (tmp_path / "some-file.txt").write_text("not a dir")
 
         with patch(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
+            "dashscope_agenticx.cli.experts._get_experts_dir",
             return_value=tmp_path,
         ):
-            result = _list_examples()
+            result = _list_experts()
         assert "real-dir" in result
         assert "some-file.txt" not in result
 
 
 # ---------------------------------------------------------------------------
-# _print_example_list
+# _print_expert_list
 # ---------------------------------------------------------------------------
 
 
-class TestPrintExampleList:
+class TestPrintExpertList:
     def test_does_not_raise(self):
-        """_print_example_list should run without raising."""
-        _print_example_list()  # prints to console; just verify no exception
+        """_print_expert_list should run without raising."""
+        _print_expert_list()  # prints to console; just verify no exception
 
-    def test_uses_known_examples_when_dir_empty(self, tmp_path):
-        """When _list_examples returns [], the fallback is _KNOWN_EXAMPLES."""
+    def test_uses_known_expert_when_dir_empty(self, tmp_path):
+        """When _list_experts returns [], the fallback is _KNOWN_EXPERTS."""
         with patch(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
+            "dashscope_agenticx.cli.experts._get_experts_dir",
             return_value=tmp_path,
         ):
-            _print_example_list()  # should not raise even with empty dir
+            _print_expert_list()  # should not raise even with empty dir
 
 
 # ---------------------------------------------------------------------------
-# _handle_example_command
+# _handle_expert_command
 # ---------------------------------------------------------------------------
 
 
-class TestHandleExampleCommand:
+class TestHandleExpertCommand:
     def test_no_args_shows_list(self):
         """No arguments should trigger the list display (no exception)."""
-        _handle_example_command([])
+        _handle_expert_command([])
 
     def test_list_subcommand(self):
         """`list` subcommand should not raise."""
-        _handle_example_command(["list"])
+        _handle_expert_command(["list"])
 
     def test_list_alias_dash_l(self):
-        _handle_example_command(["-l"])
+        _handle_expert_command(["-l"])
 
     def test_list_alias_dash_dash_list(self):
-        _handle_example_command(["--list"])
+        _handle_expert_command(["--list"])
 
     def test_download_without_name_does_not_raise(self):
         """`download` without a name should print an error, not crash."""
-        _handle_example_command(["download"])
+        _handle_expert_command(["download"])
 
     def test_unknown_subcommand_does_not_raise(self):
         """Unknown subcommand should print a hint, not crash."""
-        _handle_example_command(["bogus-subcommand"])
+        _handle_expert_command(["bogus-subcommand"])
 
-    def _make_example(self, tmp_path, name, files: dict[str, str]):
-        examples_dir = tmp_path / "examples"
-        ex_dir = examples_dir / name
+    def _make_expert(self, tmp_path, name, files: dict[str, str]):
+        experts_dir = tmp_path / "expert"
+        ex_dir = experts_dir / name
         for rel, content in files.items():
             f = ex_dir / rel
             f.parent.mkdir(parents=True, exist_ok=True)
             f.write_text(content, encoding="utf-8")
-        return examples_dir
+        return experts_dir
 
-    def test_download_copies_local_example_flat(self, tmp_path, monkeypatch):
-        """Example files are merged into the target's .agenticx/ directory."""
-        examples_dir = self._make_example(
+    def test_download_copies_local_expert_flat(self, tmp_path, monkeypatch):
+        """Expert files are merged into the target's .agenticx/ directory."""
+        experts_dir = self._make_expert(
             tmp_path,
             "test-ex",
-            {"README.md": "# Test Example"},
+            {"README.md": "# Test Expert"},
         )
         target_dir = tmp_path / "output"
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "test-ex", "--target", str(target_dir)],
         )
 
         assert (
             target_dir / ".agenticx" / "README.md"
-        ).read_text() == "# Test Example"
+        ).read_text() == "# Test Expert"
         assert not (target_dir / "test-ex").exists()
         assert _selected_expert(target_dir / ".agenticx") == "test-ex"
         assert not (tmp_path / ".agenticx/expert.toml").exists()
@@ -605,7 +601,7 @@ class TestHandleExampleCommand:
         capsys,
         show_usage,
     ):
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "basic-chat",
             {"README.md": "# New profile"},
@@ -615,16 +611,16 @@ class TestHandleExampleCommand:
         profile.parent.mkdir(parents=True)
         profile.write_text("# Original profile", encoding="utf-8")
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples.sys.stdin.isatty",
+            "dashscope_agenticx.cli.experts.sys.stdin.isatty",
             lambda: True,
         )
         monkeypatch.setattr("builtins.input", lambda prompt: "")
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "basic-chat", "--target", str(target_dir)],
             show_usage=show_usage,
         )
@@ -648,7 +644,7 @@ class TestHandleExampleCommand:
         monkeypatch,
         capsys,
     ):
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "basic-chat",
             {"README.md": "# New profile"},
@@ -658,15 +654,15 @@ class TestHandleExampleCommand:
         profile.parent.mkdir(parents=True)
         profile.write_text("# Original profile", encoding="utf-8")
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples.sys.stdin.isatty",
+            "dashscope_agenticx.cli.experts.sys.stdin.isatty",
             lambda: False,
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "basic-chat", "--target", str(target_dir)],
             show_usage=False,
         )
@@ -678,7 +674,7 @@ class TestHandleExampleCommand:
 
     def test_download_target_alias_short_flag(self, tmp_path, monkeypatch):
         """The -t short flag should work as an alias for --target."""
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "short-ex",
             {"file.txt": "data"},
@@ -686,11 +682,11 @@ class TestHandleExampleCommand:
         target_dir = tmp_path / "out2"
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "short-ex", "-t", str(target_dir)],
         )
 
@@ -698,7 +694,7 @@ class TestHandleExampleCommand:
 
     def test_download_skips_root_gitignore(self, tmp_path, monkeypatch):
         """The standalone-repo root .gitignore must not be merged."""
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "gi-ex",
             {
@@ -710,11 +706,11 @@ class TestHandleExampleCommand:
         target_dir = tmp_path / "out-gi"
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "gi-ex", "--target", str(target_dir)],
         )
 
@@ -725,7 +721,7 @@ class TestHandleExampleCommand:
 
     def test_download_conflict_non_tty_aborts(self, tmp_path, monkeypatch):
         """Conflicts + non-interactive stdin → abort, nothing changes."""
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "dup-ex",
             {"file.txt": "new", "other.txt": "other"},
@@ -738,15 +734,15 @@ class TestHandleExampleCommand:
         )
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
         monkeypatch.setattr(
             "sys.stdin",
             type("S", (), {"isatty": lambda self: False})(),
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "dup-ex", "--target", str(target_dir)],
         )
 
@@ -758,7 +754,7 @@ class TestHandleExampleCommand:
 
     def test_download_conflict_force_backs_up(self, tmp_path, monkeypatch):
         """--force overwrites conflicts but backs up the originals first."""
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "force-ex",
             {"file.txt": "new", "sub/nested.txt": "nested"},
@@ -775,11 +771,11 @@ class TestHandleExampleCommand:
         )
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "force-ex", "--target", str(target_dir), "--force"],
         )
 
@@ -793,7 +789,7 @@ class TestHandleExampleCommand:
 
     def test_download_conflict_tty_confirm(self, tmp_path, monkeypatch):
         """TTY + user answers y → proceed with backup."""
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "tty-ex",
             {"file.txt": "new"},
@@ -806,8 +802,8 @@ class TestHandleExampleCommand:
         )
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
         monkeypatch.setattr(
             "sys.stdin",
@@ -815,7 +811,7 @@ class TestHandleExampleCommand:
         )
         monkeypatch.setattr("builtins.input", lambda prompt="": "y")
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "tty-ex", "--target", str(target_dir)],
         )
 
@@ -830,7 +826,7 @@ class TestHandleExampleCommand:
         monkeypatch,
     ):
         """TTY + empty answer (Enter) → default Yes, proceed with backup."""
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "enter-ex",
             {"file.txt": "new"},
@@ -843,8 +839,8 @@ class TestHandleExampleCommand:
         )
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
         monkeypatch.setattr(
             "sys.stdin",
@@ -852,7 +848,7 @@ class TestHandleExampleCommand:
         )
         monkeypatch.setattr("builtins.input", lambda prompt="": "")
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "enter-ex", "--target", str(target_dir)],
         )
 
@@ -863,7 +859,7 @@ class TestHandleExampleCommand:
 
     def test_download_conflict_tty_decline(self, tmp_path, monkeypatch):
         """TTY + user answers n → cancel, nothing changes."""
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "no-ex",
             {"file.txt": "new"},
@@ -876,8 +872,8 @@ class TestHandleExampleCommand:
         )
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
         monkeypatch.setattr(
             "sys.stdin",
@@ -885,7 +881,7 @@ class TestHandleExampleCommand:
         )
         monkeypatch.setattr("builtins.input", lambda prompt="": "n")
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "no-ex", "--target", str(target_dir)],
         )
 
@@ -893,8 +889,8 @@ class TestHandleExampleCommand:
         assert not (target_dir / ".agenticx" / "backup").exists()
 
     def test_download_skips_junk_files(self, tmp_path, monkeypatch):
-        """__pycache__/.git/.pyc under the example must not be copied."""
-        examples_dir = self._make_example(
+        """__pycache__/.git/.pyc under the expert must not be copied."""
+        experts_dir = self._make_expert(
             tmp_path,
             "junk-ex",
             {
@@ -903,18 +899,18 @@ class TestHandleExampleCommand:
                 ".git/config": "junk",
             },
         )
-        (examples_dir / "junk-ex" / "mod.pyc").write_text(
+        (experts_dir / "junk-ex" / "mod.pyc").write_text(
             "junk",
             encoding="utf-8",
         )
         target_dir = tmp_path / "out7"
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "junk-ex", "--target", str(target_dir)],
         )
 
@@ -925,12 +921,12 @@ class TestHandleExampleCommand:
 
 
 class TestDownloadRepoGuidance:
-    def _no_local_example(self, tmp_path, monkeypatch):
-        """Patch away local examples and configured repo; return config paths."""
-        empty = tmp_path / "examples"
+    def _no_local_expert(self, tmp_path, monkeypatch):
+        """Patch away local expert and configured repo; return config paths."""
+        empty = tmp_path / "expert"
         empty.mkdir()
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
+            "dashscope_agenticx.cli.experts._get_experts_dir",
             lambda: empty,
         )
 
@@ -955,7 +951,7 @@ class TestDownloadRepoGuidance:
             return src
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._clone_example_to_temp",
+            "dashscope_agenticx.cli.experts._clone_expert_to_temp",
             fake,
         )
 
@@ -965,29 +961,29 @@ class TestDownloadRepoGuidance:
         monkeypatch,
         capsys,
     ):
-        self._no_local_example(tmp_path, monkeypatch)
+        self._no_local_expert(tmp_path, monkeypatch)
         self._fake_clone(monkeypatch)
         monkeypatch.setattr(
             "sys.stdin",
             type("S", (), {"isatty": lambda self: False})(),
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "ghost", "--target", str(tmp_path / "out")],
         )
 
         assert (tmp_path / "out" / ".agenticx" / "README.md").read_text() == (
-            "from " + _DEFAULT_EXAMPLES_REPO
+            "from " + _DEFAULT_EXPERTS_REPO
         )
         assert _selected_expert(tmp_path / "out" / ".agenticx") == "ghost"
-        assert "Enter the examples" not in capsys.readouterr().out
+        assert "Enter the expert" not in capsys.readouterr().out
 
     def test_repo_flag_saved_and_used(self, tmp_path, monkeypatch):
-        _, cfg_file = self._no_local_example(tmp_path, monkeypatch)
+        _, cfg_file = self._no_local_expert(tmp_path, monkeypatch)
         self._fake_clone(monkeypatch)
         target_dir = tmp_path / "out"
 
-        _handle_example_command(
+        _handle_expert_command(
             [
                 "download",
                 "remote-ex",
@@ -1002,22 +998,22 @@ class TestDownloadRepoGuidance:
             "from http://git.example.com/a/b.git"
         )
         content = cfg_file.read_text(encoding="utf-8")
-        assert 'examples_repo = "http://git.example.com/a/b.git"' in content
+        assert 'expert_repo = "http://git.example.com/a/b.git"' in content
 
     def test_repo_flag_replaces_existing_config_value(
         self,
         tmp_path,
         monkeypatch,
     ):
-        cfg_dir, cfg_file = self._no_local_example(tmp_path, monkeypatch)
+        cfg_dir, cfg_file = self._no_local_expert(tmp_path, monkeypatch)
         cfg_dir.mkdir(parents=True)
         cfg_file.write_text(
-            'examples_repo = "http://old.git"\nexamples_branch = "dev"\n',
+            'expert_repo = "http://old.git"\nexpert_branch = "dev"\n',
             encoding="utf-8",
         )
         self._fake_clone(monkeypatch)
 
-        _handle_example_command(
+        _handle_expert_command(
             [
                 "download",
                 "remote-ex",
@@ -1029,15 +1025,15 @@ class TestDownloadRepoGuidance:
         )
 
         content = cfg_file.read_text(encoding="utf-8")
-        assert 'examples_repo = "http://new.git"' in content
-        assert 'examples_branch = "dev"' in content  # other keys preserved
+        assert 'expert_repo = "http://new.git"' in content
+        assert 'expert_branch = "dev"' in content  # other keys preserved
 
     def test_tty_uses_default_without_saving_an_override(
         self,
         tmp_path,
         monkeypatch,
     ):
-        _, cfg_file = self._no_local_example(tmp_path, monkeypatch)
+        _, cfg_file = self._no_local_expert(tmp_path, monkeypatch)
         self._fake_clone(monkeypatch)
         monkeypatch.setattr(
             "sys.stdin",
@@ -1051,13 +1047,13 @@ class TestDownloadRepoGuidance:
         )
 
         target_dir = tmp_path / "out"
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "remote-ex", "--target", str(target_dir)],
         )
 
         assert (
             target_dir / ".agenticx" / "README.md"
-        ).read_text() == "from " + _DEFAULT_EXAMPLES_REPO
+        ).read_text() == "from " + _DEFAULT_EXPERTS_REPO
         assert not cfg_file.exists()
 
     def test_configured_repo_overrides_the_public_default(
@@ -1065,7 +1061,7 @@ class TestDownloadRepoGuidance:
         tmp_path,
         monkeypatch,
     ):
-        self._no_local_example(tmp_path, monkeypatch)
+        self._no_local_expert(tmp_path, monkeypatch)
         from dashscope_agenticx.config import Config
 
         monkeypatch.setattr(
@@ -1073,8 +1069,8 @@ class TestDownloadRepoGuidance:
             "load",
             classmethod(
                 lambda cls, **kwargs: cls(
-                    examples_repo="https://git.example.com/catalog.git",
-                    examples_branch="custom",
+                    expert_repo="https://git.example.com/catalog.git",
+                    expert_branch="custom",
                 ),
             ),
         )
@@ -1085,13 +1081,13 @@ class TestDownloadRepoGuidance:
 
 
 # ---------------------------------------------------------------------------
-# example restore
+# expert restore
 # ---------------------------------------------------------------------------
 
 
-class TestExampleRestore:
+class TestExpertRestore:
     def test_restore_roundtrip_undoes_download(self, tmp_path, monkeypatch):
-        examples_dir = self._make_example(
+        experts_dir = self._make_expert(
             tmp_path,
             "ex",
             {"file.txt": "new", ".agenticx/skills/s.md": "skill"},
@@ -1104,15 +1100,15 @@ class TestExampleRestore:
         )
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "ex", "--target", str(target_dir), "--force"],
         )
         assert (target_dir / ".agenticx" / "file.txt").read_text() == "new"
 
-        _handle_example_command(["restore", "--target", str(target_dir)])
+        _handle_expert_command(["restore", "--target", str(target_dir)])
 
         assert (target_dir / ".agenticx" / "file.txt").read_text() == "old"
         assert not (
@@ -1123,13 +1119,13 @@ class TestExampleRestore:
         ).exists()  # backup consumed
 
     def test_restore_without_backup_is_graceful(self, tmp_path, capsys):
-        _handle_example_command(["restore", "--target", str(tmp_path)])
+        _handle_expert_command(["restore", "--target", str(tmp_path)])
 
         assert "No restorable backup found" in capsys.readouterr().out
 
     def test_new_backup_replaces_previous(self, tmp_path, monkeypatch):
         """Single rolling backup: only the latest download can be rolled back."""
-        examples_dir = self._make_example(tmp_path, "ex", {"f.txt": "v2"})
+        experts_dir = self._make_expert(tmp_path, "ex", {"f.txt": "v2"})
         target_dir = tmp_path / "proj"
         (target_dir / ".agenticx").mkdir(parents=True)
         (target_dir / ".agenticx" / "f.txt").write_text(
@@ -1137,18 +1133,18 @@ class TestExampleRestore:
             encoding="utf-8",
         )
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
-            lambda: examples_dir,
+            "dashscope_agenticx.cli.experts._get_experts_dir",
+            lambda: experts_dir,
         )
 
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "ex", "--target", str(target_dir), "--force"],
         )
         (target_dir / ".agenticx" / "f.txt").write_text(
             "v1",
             encoding="utf-8",
         )
-        _handle_example_command(
+        _handle_expert_command(
             ["download", "ex", "--target", str(target_dir), "--force"],
         )
 
@@ -1156,19 +1152,19 @@ class TestExampleRestore:
             target_dir / ".agenticx" / "backup" / "f.txt"
         ).read_text() == "v1"
 
-        _handle_example_command(["restore", "--target", str(target_dir)])
+        _handle_expert_command(["restore", "--target", str(target_dir)])
 
         assert (target_dir / ".agenticx" / "f.txt").read_text() == "v1"
         assert not (target_dir / ".agenticx" / "backup").exists()
 
-    def _make_example(self, tmp_path, name, files):
-        examples_dir = tmp_path / "examples"
-        ex_dir = examples_dir / name
+    def _make_expert(self, tmp_path, name, files):
+        experts_dir = tmp_path / "expert"
+        ex_dir = experts_dir / name
         for rel, content in files.items():
             f = ex_dir / rel
             f.parent.mkdir(parents=True, exist_ok=True)
             f.write_text(content, encoding="utf-8")
-        return examples_dir
+        return experts_dir
 
 
 # ---------------------------------------------------------------------------
@@ -1196,38 +1192,38 @@ class TestCatalogPaths:
             )
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples.subprocess.run",
+            "dashscope_agenticx.cli.experts.subprocess.run",
             run,
         )
         assert (
-            _clone_example_to_temp(
+            _clone_expert_to_temp(
                 "basic-chat",
-                _DEFAULT_EXAMPLES_REPO,
+                _DEFAULT_EXPERTS_REPO,
                 "main",
                 tmp_path,
             )
             == app
         )
-        assert calls[0][-3:] == ["--", _DEFAULT_EXAMPLES_REPO, str(tmp_path)]
+        assert calls[0][-3:] == ["--", _DEFAULT_EXPERTS_REPO, str(tmp_path)]
         assert calls[1][-2:] == ["--", "apps/basic-chat"]
 
-    def test_remote_clone_does_not_fall_back_to_top_level_example(
+    def test_remote_clone_does_not_fall_back_to_top_level_expert(
         self,
         tmp_path,
         monkeypatch,
     ):
         (tmp_path / "basic-chat").mkdir()
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples.subprocess.run",
+            "dashscope_agenticx.cli.experts.subprocess.run",
             lambda arguments, **kwargs: subprocess.CompletedProcess(
                 arguments,
                 0,
             ),
         )
         with pytest.raises(FileNotFoundError):
-            _clone_example_to_temp(
+            _clone_expert_to_temp(
                 "basic-chat",
-                _DEFAULT_EXAMPLES_REPO,
+                _DEFAULT_EXPERTS_REPO,
                 "main",
                 tmp_path,
             )
@@ -1245,10 +1241,10 @@ class TestCatalogPaths:
             return subprocess.CompletedProcess(arguments, 0, stdout=output)
 
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples.subprocess.run",
+            "dashscope_agenticx.cli.experts.subprocess.run",
             run,
         )
-        assert _list_remote_examples(_DEFAULT_EXAMPLES_REPO, "main") == [
+        assert _list_remote_experts(_DEFAULT_EXPERTS_REPO, "main") == [
             "basic-chat",
             "dashscope-sdk-expert",
         ]
@@ -1273,14 +1269,14 @@ class TestCatalogPaths:
         capsys,
     ):
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._get_examples_dir",
+            "dashscope_agenticx.cli.experts._get_experts_dir",
             lambda: tmp_path / "apps",
         )
         monkeypatch.setattr(
-            "dashscope_agenticx.cli.examples._clone_example_to_temp",
+            "dashscope_agenticx.cli.experts._clone_expert_to_temp",
             lambda *arguments: pytest.fail("invalid names must not clone"),
         )
-        _handle_example_command(
+        _handle_expert_command(
             ["download", name, "--target", str(tmp_path / "workspace")],
         )
         assert "single directory name" in capsys.readouterr().out
@@ -1304,7 +1300,7 @@ class TestDownloadPathSecurity:
         workspace = tmp_path / "workspace"
 
         with pytest.raises(ValueError, match="symbolic links"):
-            _copy_example_flat(source, workspace, force=True)
+            _copy_expert_flat(source, workspace, force=True)
 
         assert not (workspace / ".agenticx").exists()
         assert private.read_text() == "private-content"
@@ -1321,19 +1317,19 @@ class TestDownloadPathSecurity:
         self._link(profile / "config.toml", private)
 
         with pytest.raises(ValueError, match="symbolic links"):
-            _copy_example_flat(source, workspace, force=True)
+            _copy_expert_flat(source, workspace, force=True)
 
         assert private.read_text() == "private-content"
         assert not (profile / "backup").exists()
 
-    def test_example_cannot_supply_managed_backup_contents(self, tmp_path):
+    def test_expert_cannot_supply_managed_backup_contents(self, tmp_path):
         source = tmp_path / "app"
         backup = source / ".agenticx" / "backup"
         backup.mkdir(parents=True)
         (backup / ".manifest").write_text("bad", encoding="utf-8")
 
         with pytest.raises(ValueError, match="backup directory"):
-            _copy_example_flat(source, tmp_path / "workspace", force=True)
+            _copy_expert_flat(source, tmp_path / "workspace", force=True)
 
         assert not (tmp_path / "workspace" / ".agenticx").exists()
 
@@ -1355,7 +1351,7 @@ class TestDownloadPathSecurity:
         )
 
         with pytest.raises(ValueError, match="escapes"):
-            _restore_example_backup(workspace)
+            _restore_expert_backup(workspace)
 
         assert valid.read_text() == "keep"
         assert private.read_text() == "private-content"
@@ -1380,7 +1376,7 @@ class TestDownloadPathSecurity:
         self._link(backup / "config.toml", private)
 
         with pytest.raises(ValueError, match="symbolic links"):
-            _restore_example_backup(workspace)
+            _restore_expert_backup(workspace)
 
         assert valid.read_text() == "keep"
         assert private.read_text() == "private-content"
@@ -1389,12 +1385,12 @@ class TestDownloadPathSecurity:
 class TestConstants:
     def test_default_repo_is_string(self):
         assert (
-            _DEFAULT_EXAMPLES_REPO
+            _DEFAULT_EXPERTS_REPO
             == "https://github.com/dashscope/dashscope-agenticx-experts.git"
         )
 
     def test_default_branch_is_string(self):
-        assert isinstance(_DEFAULT_EXAMPLES_BRANCH, str)
+        assert isinstance(_DEFAULT_EXPERT_BRANCH, str)
 
     def test_default_branch_is_main(self):
-        assert _DEFAULT_EXAMPLES_BRANCH == "main"
+        assert _DEFAULT_EXPERT_BRANCH == "main"

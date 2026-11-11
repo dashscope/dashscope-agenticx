@@ -1,7 +1,7 @@
-# Migrating to DashScope AgenticX 1.0.0
+# Migrating to DashScope AgenticX 1.0.1
 
 This guide describes migration from legacy AgenticCLI versions to
-DashScope AgenticX `1.0.0`.
+DashScope AgenticX `1.0.1`.
 
 ## Current identities
 
@@ -23,8 +23,8 @@ DashScope AgenticX `1.0.0`.
 
 Expert downloads default to
 `https://github.com/dashscope/dashscope-agenticx-experts.git` on branch `main`.
-An explicit `examples_repo` setting or `--repo` flag can select another source.
-The catalog uses only `apps/<name>/`; legacy top-level example directories
+An explicit `expert_repo` setting or `--repo` flag can select another source.
+The catalog uses only `apps/<name>/`; legacy top-level Expert directories
 are not supported.
 
 ## One-way directory migration

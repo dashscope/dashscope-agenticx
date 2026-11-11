@@ -35,7 +35,7 @@ __all__ = [
 
 # Env var hints for the /key command and profile validation. NOT used for
 # dispatch — protocol routing is driven by profile.protocol (filled from
-# the user's custom-extensions.toml, see the basic-chat example).
+# the user's custom-extensions.toml, see the basic-chat Expert).
 _WARNED_UNSUPPORTED_RUNTIME_OPTIONS: set[tuple[str, str, str]] = set()
 
 
@@ -96,6 +96,7 @@ def _create_provider(profile: ProviderProfile):
             model=model,
             api_key=api_key,
             base_url=base_url,
+            module=profile.module,
         )
     if proto == "dashscope":
         return TongyiProvider(
@@ -107,7 +108,12 @@ def _create_provider(profile: ProviderProfile):
         )
     from dashscope_agenticx.providers.openai import OpenAIProvider
 
-    return OpenAIProvider(model=model, api_key=api_key, base_url=base_url)
+    return OpenAIProvider(
+        model=model,
+        api_key=api_key,
+        base_url=base_url,
+        module=profile.module,
+    )
 
 
 def get_provider(

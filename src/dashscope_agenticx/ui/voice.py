@@ -12,6 +12,8 @@ import threading
 import time
 from typing import Optional
 
+from dashscope_agenticx.dashscope_headers import mark_dashscope_sdk_client
+
 
 def is_available() -> tuple[bool, str]:
     """Check if voice input dependencies are installed."""
@@ -61,6 +63,7 @@ class _RealtimeASR:
 
     def __init__(self, api_key: str, model: str):
         os.environ.setdefault("DASHSCOPE_API_KEY", api_key)
+        mark_dashscope_sdk_client()
         from dashscope.audio.asr import Recognition, RecognitionCallback
 
         self._model = model

@@ -101,7 +101,7 @@ def test_canonical_namespace_exposes_stable_sdk_contract():
     import dashscope_agenticx
     from dashscope_agenticx import sdk
 
-    assert dashscope_agenticx.__version__ == "1.0.0"
+    assert dashscope_agenticx.__version__ == "1.0.1"
     assert sdk.RuntimeBuilder is not None
     assert sdk.AgentEventEnvelope is not None
 
@@ -141,4 +141,4 @@ def test_offline_release_check_passes():
         text=True,
         check=True,
     )
-    assert "release contract ok: 1.0.0" in completed.stdout
+    assert "release contract ok: 1.0.1" in completed.stdout

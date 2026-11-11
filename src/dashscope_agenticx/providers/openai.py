@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import AsyncIterator
 
+from dashscope_agenticx.dashscope_headers import dashscope_sdk_headers
 from dashscope_agenticx.providers.base import LLMChunk, LLMResponse, ToolCall
 
 try:
@@ -19,6 +20,7 @@ class OpenAIProvider:
         model: str = "gpt-4o",
         api_key: str | None = None,
         base_url: str | None = None,
+        module: str = "app",
     ):
         if AsyncOpenAI is None:
             raise ImportError(
@@ -28,7 +30,14 @@ class OpenAIProvider:
         from dashscope_agenticx.config import normalize_model_name
 
         self.model = normalize_model_name(model)
-        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self.client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+            default_headers=dashscope_sdk_headers(
+                module,
+                base_url=base_url or "",
+            ),
+        )
 
     async def aclose(self) -> None:
         await self.client.close()

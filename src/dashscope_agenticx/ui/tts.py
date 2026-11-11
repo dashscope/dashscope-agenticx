@@ -19,6 +19,7 @@ import time
 from typing import Optional
 
 from dashscope_agenticx.config import normalize_model_name
+from dashscope_agenticx.dashscope_headers import mark_dashscope_sdk_client
 
 # ---------------------------------------------------------------------------
 # Public constants
@@ -281,6 +282,7 @@ class TTSPlayer:
         # Ensure the API key is available to the dashscope SDK.
         # The SDK reads dashscope.api_key (module-level), not the env var
         # directly in all code paths, so we must set both.
+        mark_dashscope_sdk_client()
         import dashscope
         import numpy as np
         import sounddevice as sd

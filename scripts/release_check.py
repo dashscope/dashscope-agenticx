@@ -25,7 +25,7 @@ def main() -> int:
     assert pyproject["project"]["scripts"] == {
         "agenticx": "dashscope_agenticx.cli:main",
     }
-    assert __version__ == "1.0.0"
+    assert __version__ == "1.0.1"
     assert (SRC / "dashscope_agenticx" / "py.typed").is_file()
     for legacy in ("agenticx", "agenticcli", "acli"):
         assert not (SRC / legacy).exists()

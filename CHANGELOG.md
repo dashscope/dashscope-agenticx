@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-11-11
+
+### Added
+
+- End-to-end App Catalog installation and verification quick starts, including
+  the separate Expert activation step and one-shot `agenticx -c` usage.
+- DashScope and MaaS request attribution through
+  `x-dashscope-sdk-client` and `x-dashscope-sdk-session-id` across Native,
+  OpenAI-compatible, Anthropic-compatible, MCP, ASR, and TTS requests.
+  Third-party endpoints do not receive these headers.
+
+### Changed
+
+- Expert management now consistently uses `agenticx expert`, `/expert`,
+  `expert_repo`, and `expert_branch`; legacy Example command and configuration
+  names have been removed.
+- English and Chinese guides now cover the current CLI, interaction, Skill,
+  Session, and Server commands and clarify App installation versus Expert
+  activation.
+
 ## [1.0.0] - 2026-11-10
 
 ### Added
@@ -31,10 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `user-guide_zh.md`.
 - Public guides and migration documentation live at the repository root.
   Source distributions exclude the internal `md/` directory.
-- Example downloads default to the public `dashscope/dashscope-agenticx-experts`
+- Expert downloads default to the public `dashscope/dashscope-agenticx-experts`
   repository on branch `main`; explicit repository overrides remain supported.
 - App Catalog downloads read only `apps/<name>/`, with no fallback to legacy
-  top-level example directories or an interactive repository setup prompt.
+  top-level Expert directories or an interactive repository setup prompt.
 
 ### Fixed
 
@@ -74,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   do not match a known API-key pattern.
 - Credential assignments are redacted regardless of length, and complete or
   truncated multiline private-key blocks are removed from text payloads.
-- Example download and restore reject path traversal, symbolic links, and
+- Expert download and restore reject path traversal, symbolic links, and
   attempts to overwrite their managed backup directory.
 - PyCharm rolling selections preserve content offsets and flush pending wheel
   batches before mouse release.
@@ -190,8 +210,8 @@ contracts.
 - Camera and browser tools register only when their optional dependencies are
   present. Skill evolution and directive auto-learning are off by default and
   require explicit experimental environment gates.
-- The Example command is explicitly a teaching workflow; production profiles
-  use versioned Apps. The examples repository now exposes an `apps/` catalog
+- The Expert command is explicitly a teaching workflow; production profiles
+  use versioned Apps. The Expert repository now exposes an `apps/` catalog
   schema for Basic Chat, DashScope SDK Expert, and Bailian Expert.
 - Session events now project messages, plan, goal, artifacts, and unified
   runtime/agent/session/run/turn identifiers; forks replay the same state.

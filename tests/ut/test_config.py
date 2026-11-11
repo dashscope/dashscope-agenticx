@@ -1001,8 +1001,8 @@ class TestConfigSaveOrdering:
         cfg.thinking_provider = "anthropic"
         cfg.thinking_model = "claude-opus-4-20250514"
         cfg.loop_mode = "structured"
-        cfg.examples_repo = "https://example.com/repo.git"
-        cfg.examples_branch = "dev"
+        cfg.expert_repo = "https://example.com/repo.git"
+        cfg.expert_branch = "dev"
         cfg.save_workspace()
 
         # Array-of-tables headers must appear after every bare scalar key.
@@ -1015,8 +1015,8 @@ class TestConfigSaveOrdering:
             "thinking_provider",
             "thinking_model",
             "loop_mode",
-            "examples_repo",
-            "examples_branch",
+            "expert_repo",
+            "expert_branch",
         ):
             assert content.index(f"{scalar} =") < first_table
 
@@ -1024,8 +1024,8 @@ class TestConfigSaveOrdering:
         assert loaded.thinking_provider == "anthropic"
         assert loaded.thinking_model == "claude-opus-4-20250514"
         assert loaded.loop_mode == "structured"
-        assert loaded.examples_repo == "https://example.com/repo.git"
-        assert loaded.examples_branch == "dev"
+        assert loaded.expert_repo == "https://example.com/repo.git"
+        assert loaded.expert_branch == "dev"
         assert loaded.subagents["researcher"].model == "qwen-max"
         assert loaded.subagents["researcher"].temperature == 0.7
         assert loaded.subagents["researcher"].max_turns == 10

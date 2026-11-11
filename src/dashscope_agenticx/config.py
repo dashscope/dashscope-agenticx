@@ -520,8 +520,8 @@ class Config:
     fallback_providers: list[str] = field(
         default_factory=list,
     )  # Ordered fallback provider names
-    examples_repo: str = ""  # Override the default public Expert catalog URL
-    examples_branch: str = "main"
+    expert_repo: str = ""  # Override the default public Expert catalog URL
+    expert_branch: str = "main"
 
     def __setattr__(self, name: str, value) -> None:
         if isinstance(value, str) and (
@@ -725,10 +725,10 @@ class Config:
                 self.tts_speed = float(data["tts_speed"])
             except (ValueError, TypeError):
                 pass
-        if "examples_repo" in data:
-            self.examples_repo = str(data["examples_repo"])
-        if "examples_branch" in data:
-            self.examples_branch = str(data["examples_branch"])
+        if "expert_repo" in data:
+            self.expert_repo = str(data["expert_repo"])
+        if "expert_branch" in data:
+            self.expert_branch = str(data["expert_branch"])
 
     def _load_workspace(self):
         self._load_workspace_from(WORKSPACE_CONFIG_FILE)
@@ -920,10 +920,10 @@ class Config:
                     else:
                         kwargs.pop("args", None)
                     self.mcp_servers.append(MCPServerConfig(**kwargs))
-        if "examples_repo" in data:
-            self.examples_repo = str(data["examples_repo"])
-        if "examples_branch" in data:
-            self.examples_branch = str(data["examples_branch"])
+        if "expert_repo" in data:
+            self.expert_repo = str(data["expert_repo"])
+        if "expert_branch" in data:
+            self.expert_branch = str(data["expert_branch"])
         if "thinking_provider" in data:
             self.thinking_provider = str(data["thinking_provider"])
         if "thinking_model" in data:
@@ -1088,10 +1088,10 @@ class Config:
             lines.append(
                 f"voice_silence_threshold = {self.voice_silence_threshold}",
             )
-        if self.examples_repo:
-            lines.append(f"examples_repo = {toml_str(self.examples_repo)}")
-        if self.examples_branch != "main":
-            lines.append(f"examples_branch = {toml_str(self.examples_branch)}")
+        if self.expert_repo:
+            lines.append(f"expert_repo = {toml_str(self.expert_repo)}")
+        if self.expert_branch != "main":
+            lines.append(f"expert_branch = {toml_str(self.expert_branch)}")
         if self.thinking_provider:
             lines.append(
                 f"thinking_provider = {toml_str(self.thinking_provider)}",

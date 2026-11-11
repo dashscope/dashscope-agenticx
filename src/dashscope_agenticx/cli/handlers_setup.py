@@ -154,26 +154,29 @@ def _setup_finalize(config: Config, agent, *, context=None) -> None:
 
 def _print_setup_expert(context):
     if context is not None:
-        from dashscope_agenticx.cli.examples import _KNOWN_EXAMPLES
+        from dashscope_agenticx.cli.experts import _KNOWN_EXPERTS
 
-        examples = [
+        expert = [
             result
             for result in context.results
-            if result.name in (*_KNOWN_EXAMPLES, "examples")
+            if result.name in (*_KNOWN_EXPERTS, "expert")
         ]
-        if examples:
-            example = examples[-1]
+        if expert:
+            selected = expert[-1]
             console.print(
                 "[dim]  Expert: skipped[/dim]"
-                if example.status == "skipped"
-                else f"[dim]  Expert: {example.name} ({example.status})[/dim]",
+                if selected.status == "skipped"
+                else (
+                    f"[dim]  Expert: {selected.name} "
+                    f"({selected.status})[/dim]"
+                ),
             )
 
 
-def _setup_examples(*, context=None):
-    from dashscope_agenticx.cli.examples import (
-        _KNOWN_EXAMPLES,
-        _handle_example_command,
+def _setup_expert(*, context=None):
+    from dashscope_agenticx.cli.experts import (
+        _KNOWN_EXPERTS,
+        _handle_expert_command,
     )
     from dashscope_agenticx.cli.wizard import (
         WizardContext,
@@ -189,23 +192,23 @@ def _setup_examples(*, context=None):
             "existing provider definitions.[/dim]",
         )
         console.print("  [0] Skip (default)")
-        for index, name in enumerate(_KNOWN_EXAMPLES, 1):
+        for index, name in enumerate(_KNOWN_EXPERTS, 1):
             console.print(f"  [{index}] {name}")
         choice = read_choice("Expert [0]: ", "0")
         if choice == "0":
-            result = WizardResult("skipped", "examples")
+            result = WizardResult("skipped", "expert")
             context.results.append(result)
             return result
-        if choice in _KNOWN_EXAMPLES:
+        if choice in _KNOWN_EXPERTS:
             name = choice
-        elif choice.isdigit() and 1 <= int(choice) <= len(_KNOWN_EXAMPLES):
-            name = _KNOWN_EXAMPLES[int(choice) - 1]
+        elif choice.isdigit() and 1 <= int(choice) <= len(_KNOWN_EXPERTS):
+            name = _KNOWN_EXPERTS[int(choice) - 1]
         else:
             console.print(
                 "[yellow]Choose a listed Expert or 0 to skip.[/yellow]",
             )
             continue
-        copied = _handle_example_command(
+        copied = _handle_expert_command(
             ["download", name],
             show_usage=False,
             preserve_configuration=True,
@@ -383,7 +386,7 @@ async def _run_setup(config: Config, agent):
             config.__dict__.clear()
             config.__dict__.update(previous)
             return result
-        _setup_examples(context=context)
+        _setup_expert(context=context)
         _hot_reload()
         _setup_finalize(config, agent, context=context)
         deferred = (

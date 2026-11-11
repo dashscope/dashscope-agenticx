@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Security fixes target the active `1.0.0` release line.
+Security fixes target the active `1.0.1` release line.
 
 ## Reporting
 

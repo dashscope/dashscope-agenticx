@@ -10,7 +10,7 @@ from dashscope_agenticx.cli import runners
 from dashscope_agenticx.cli.handlers_setup import (
     _ensure_provider_key,
     _handle_setup,
-    _setup_examples,
+    _setup_expert,
     _setup_finalize,
     _setup_preset_custom,
 )
@@ -108,7 +108,7 @@ async def test_setup_applies_template_to_owning_runtime(
     )
     (package / "prompt.md").write_text("Template package instructions.")
     monkeypatch.setattr(
-        "dashscope_agenticx.cli.examples._get_examples_dir",
+        "dashscope_agenticx.cli.experts._get_experts_dir",
         lambda: tmp_path / "apps",
     )
     monkeypatch.setattr("sys.stdin.isatty", lambda: True)
@@ -361,7 +361,7 @@ def test_setup_summary_separates_pending_capabilities(monkeypatch, capsys):
     context = WizardContext(
         setup=True,
         pending_capabilities={"bailian.mcp"},
-        results=[WizardResult("skipped", "examples")],
+        results=[WizardResult("skipped", "expert")],
     )
     with platform_mod.bind_capability_tools({}):
         _setup_finalize(config, types.SimpleNamespace(), context=context)
@@ -376,20 +376,20 @@ def test_setup_summary_separates_pending_capabilities(monkeypatch, capsys):
 
 @pytest.mark.parametrize("api_key", ["", "sk-default-secret"])
 @pytest.mark.parametrize("choice", ["", "1"])
-@pytest.mark.parametrize("example", ["", "basic-chat"])
-async def test_default_setup_selects_examples_separately(
+@pytest.mark.parametrize("expert", ["", "basic-chat"])
+async def test_default_setup_selects_expert_separately(
     monkeypatch,
     wizard_paths,
     capsys,
     api_key,
     choice,
-    example,
+    expert,
 ):
     from dashscope_agenticx.utils.toml import load_toml
 
     monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
     prompts = []
-    answers = iter(["", choice, example])
+    answers = iter(["", choice, expert])
 
     def read_input(prompt):
         prompts.append(prompt)
@@ -407,7 +407,7 @@ async def test_default_setup_selects_examples_separately(
         return True
 
     monkeypatch.setattr(
-        "dashscope_agenticx.cli.examples._handle_example_command",
+        "dashscope_agenticx.cli.experts._handle_expert_command",
         download,
     )
     monkeypatch.setattr("dashscope_agenticx.dev._hot_reload", lambda: None)
@@ -436,11 +436,11 @@ async def test_default_setup_selects_examples_separately(
     assert downloads == (
         [
             (
-                ["download", example],
+                ["download", expert],
                 {"show_usage": False, "preserve_configuration": True},
             ),
         ]
-        if example
+        if expert
         else []
     )
     assert (
@@ -467,11 +467,8 @@ async def test_default_setup_selects_examples_separately(
     )
     assert "Provider: tongyi" in output and "Model: qwen3.8-flash" in output
     assert "Protocol: openai" in output and "API base URL:" in output
-    assert (
-        "Experts are selected separately" in output
-        and "Examples: skip" not in output
-    )
-    assert f"Expert: {example or 'skipped'}" in output
+    assert "Experts are selected separately" in output
+    assert f"Expert: {expert or 'skipped'}" in output
     assert (
         "basic-chat" in output
         and "dashscope-sdk-expert" in output
@@ -569,7 +566,7 @@ def test_setup_finalize_passes_connect_mcp_fn(monkeypatch):
         ("99", None),
     ],
 )
-def test_setup_examples_menu(monkeypatch, capsys, choice, expected):
+def test_setup_expert_menu(monkeypatch, capsys, choice, expected):
     calls = []
     answers = iter([choice, "0"])
     monkeypatch.setattr("builtins.input", lambda prompt: next(answers))
@@ -579,10 +576,10 @@ def test_setup_examples_menu(monkeypatch, capsys, choice, expected):
         return True
 
     monkeypatch.setattr(
-        "dashscope_agenticx.cli.examples._handle_example_command",
+        "dashscope_agenticx.cli.experts._handle_expert_command",
         download,
     )
-    result = _setup_examples()
+    result = _setup_expert()
     assert calls == (
         [
             (
@@ -602,7 +599,7 @@ def test_setup_examples_menu(monkeypatch, capsys, choice, expected):
     assert "agenticx expert" not in output
 
 
-def test_setup_examples_enter_skips_without_download(monkeypatch, capsys):
+def test_setup_expert_enter_skips_without_download(monkeypatch, capsys):
     from dashscope_agenticx.cli.wizard import WizardContext
 
     prompts = []
@@ -613,12 +610,12 @@ def test_setup_examples_enter_skips_without_download(monkeypatch, capsys):
 
     monkeypatch.setattr("builtins.input", read_input)
     monkeypatch.setattr(
-        "dashscope_agenticx.cli.examples._handle_example_command",
-        lambda *args, **kwargs: pytest.fail("Default examples downloaded"),
+        "dashscope_agenticx.cli.experts._handle_expert_command",
+        lambda *args, **kwargs: pytest.fail("Default expert downloaded"),
     )
     context = WizardContext(setup=True)
-    result = _setup_examples(context=context)
-    assert result.status == "skipped" and result.name == "examples"
+    result = _setup_expert(context=context)
+    assert result.status == "skipped" and result.name == "expert"
     assert context.results == [result]
     assert prompts == ["Expert [0]: "]
     assert "Experts (optional)" in capsys.readouterr().out
@@ -662,8 +659,8 @@ async def test_setup_orders_shared_handlers_before_one_finalize(
     )
     monkeypatch.setattr(
         setup,
-        "_setup_examples",
-        lambda **kwargs: calls.append("examples"),
+        "_setup_expert",
+        lambda **kwargs: calls.append("expert"),
     )
     monkeypatch.setattr(
         "dashscope_agenticx.dev._hot_reload",
@@ -671,7 +668,7 @@ async def test_setup_orders_shared_handlers_before_one_finalize(
     )
     result = await _handle_setup(Config(), types.SimpleNamespace())
     assert result.handled
-    assert calls == ["provider", "capabilities", "examples", "reload", "save"]
+    assert calls == ["provider", "capabilities", "expert", "reload", "save"]
     output = capsys.readouterr().out
     assert "China general" not in output and "[3]" not in output
     assert (

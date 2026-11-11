@@ -2549,7 +2549,7 @@ class AgenticXApp(App):
         ]
 
         # Provider, Model, User
-        from dashscope_agenticx.cli.examples import _selected_expert
+        from dashscope_agenticx.cli.experts import _selected_expert
 
         user_display = self.config.user_name or "(not set)"
         info_lines.append(
@@ -2882,7 +2882,7 @@ class AgenticXApp(App):
         """Route command to handler. ``_echo=False`` skips the prompt echo
         (used when draining queued commands — they were already echoed when
         first submitted)."""
-        from dashscope_agenticx.cli.constants import EXPERT_COMMAND_ALIASES
+        from dashscope_agenticx.cli.constants import EXPERT_COMMANDS
 
         output = self.query_one("#output", RichLog)
         self._clear_selection_actions()
@@ -2979,7 +2979,7 @@ class AgenticXApp(App):
             # Expert commands may prompt (repo url, overwrite confirm) and
             # runs blocking git clone + file copies
             is_interactive_expert = (
-                command.split(maxsplit=1)[0] in EXPERT_COMMAND_ALIASES
+                command.split(maxsplit=1)[0] in EXPERT_COMMANDS
             )
             if (
                 any(command.startswith(p) for p in interactive_prefixes)
@@ -3200,7 +3200,7 @@ class AgenticXApp(App):
         """Handle async slash commands (profile, prompt, data, kb, etc.)
         Redirects module consoles to RichLog, dispatches, then restores."""
         import dashscope_agenticx.cli as cli_module
-        from dashscope_agenticx.cli.constants import EXPERT_COMMAND_ALIASES
+        from dashscope_agenticx.cli.constants import EXPERT_COMMANDS
 
         output = self.query_one("#output", RichLog)
 
@@ -3212,9 +3212,9 @@ class AgenticXApp(App):
             import dashscope_agenticx.cli.handlers_provider  # noqa: F401
 
         # Same lazy-import console capture issue for Expert commands.
-        expert_command = command.split(maxsplit=1)[0] in EXPERT_COMMAND_ALIASES
+        expert_command = command.split(maxsplit=1)[0] in EXPERT_COMMANDS
         if expert_command or command.startswith("/setup"):
-            import dashscope_agenticx.cli.examples  # noqa: F401
+            import dashscope_agenticx.cli.experts  # noqa: F401
 
         # Interactive commands call input() and must run in a thread executor
         # so they don't block the TUI event loop.

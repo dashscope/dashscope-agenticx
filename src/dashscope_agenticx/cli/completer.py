@@ -22,7 +22,7 @@ from dashscope_agenticx.cli.constants import (
     _SUBCOMMANDS,
     _TOP_LEVEL_COMMANDS,
     CAPABILITY_CATALOG,
-    EXPERT_COMMAND_ALIASES,
+    EXPERT_COMMANDS,
 )
 from dashscope_agenticx.config import Config
 from dashscope_agenticx.skills import BUILTIN_SKILLS, KNOWN_MCP_SERVICES
@@ -222,13 +222,13 @@ class AcliCompleter(Completer):
         cmd = tokens[0]
 
         if (
-            cmd in EXPERT_COMMAND_ALIASES
+            cmd in EXPERT_COMMANDS
             and arg_index == 2
             and tokens[1] == "download"
         ):
-            from dashscope_agenticx.cli.examples import _KNOWN_EXAMPLES
+            from dashscope_agenticx.cli.experts import _KNOWN_EXPERTS
 
-            return list(_KNOWN_EXAMPLES)
+            return list(_KNOWN_EXPERTS)
 
         if cmd == "/skill" and arg_index == 1:
             return _SUBCOMMANDS["/skill"] + list(BUILTIN_SKILLS.keys())

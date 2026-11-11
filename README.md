@@ -102,7 +102,7 @@ Do not paste real API keys into tracked configuration or example files.
 ```bash
 agenticx --cli                      # Inline REPL with terminal scrollback
 agenticx --tui                      # Textual interface (requires the TUI extra)
-agenticx "List the files in this directory and summarize the project"
+agenticx -c "List the files in this directory and summarize the project"
 ```
 
 Inside an interactive session:
@@ -189,6 +189,33 @@ agenticx app info <app-name>
 agenticx app verify <app-name>
 agenticx app update <app-name>
 ```
+
+For example, install and verify DashScope SDK Expert from the official App
+Catalog:
+
+```bash
+python -m pip install "dashscope-agenticx>=1.0.1,<2"
+git clone https://github.com/dashscope/dashscope-agenticx-experts.git
+cd dashscope-agenticx-experts
+agenticx app install ./apps/dashscope-sdk-expert
+agenticx app info dashscope-sdk-expert
+agenticx app verify dashscope-sdk-expert
+```
+
+`app install` only installs and registers the versioned App under the current
+workspace's `.agenticx/apps/`; it does not activate the App profile. After the
+`cd` above, the cloned repository is that workspace. To run DashScope SDK Expert,
+merge its profile into the workspace and start AgenticX:
+
+```bash
+export DASHSCOPE_API_KEY="<your-api-key>"
+agenticx expert download dashscope-sdk-expert
+agenticx
+```
+
+Expert downloads are not registered as Apps and cannot be managed with `app
+list` or `app update`. `app update` reinstalls from the recorded source, so run
+`git pull` in the clone before updating a locally cloned App.
 
 The source tree includes `dashscope-sdk-expert` and `bailian-expert` bundles.
 Inspect the manifest and requested permissions before installation. A checksum

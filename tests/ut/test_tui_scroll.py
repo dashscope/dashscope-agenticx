@@ -1721,7 +1721,7 @@ class TestExpertUI:
 
     @pytest.mark.parametrize(
         "command",
-        ["/expert", "/experts", "/example", "/examples"],
+        ["/expert"],
     )
     @pytest.mark.parametrize(
         "arguments",
@@ -1733,7 +1733,7 @@ class TestExpertUI:
         command,
         arguments,
     ):
-        import dashscope_agenticx.cli.examples as expert_handler
+        import dashscope_agenticx.cli.experts as expert_handler
 
         calls = []
         worker_threads = []
@@ -1747,7 +1747,7 @@ class TestExpertUI:
 
         monkeypatch.setattr(
             expert_handler,
-            "_handle_example_command",
+            "_handle_expert_command",
             fake_handler,
         )
         app = _make_app()
