@@ -13,8 +13,8 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
       - run: python -m pip install pre-commit==4.3.0
@@ -27,9 +27,9 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -52,9 +52,9 @@ jobs:
       matrix:
         python-version: ["3.10", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -71,8 +71,8 @@ jobs:
         python-version: ["3.10", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
@@ -87,8 +87,8 @@ jobs:
         python-version: ["3.10", "3.13"]
         scope: [base, all]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install build twine
@@ -103,7 +103,7 @@ jobs:
           audit-env/bin/python -m pip install --upgrade "pip>=26.2" "setuptools>=84.1.0"
           audit-env/bin/python -m pip install "${wheel}${extra}"
       - name: Use supported Python for audit tools
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Install audit tools separately from Runtime
@@ -115,7 +115,7 @@ jobs:
       - name: Generate installed environment SBOM
         if: always()
         run: cyclonedx-py environment audit-env/bin/python --output-file sbom.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: security-${{ matrix.python-version }}-${{ matrix.scope }}
