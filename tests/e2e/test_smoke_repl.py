@@ -169,4 +169,4 @@ class TestReplSmoke:
         home.mkdir()
         proc = _run_agenticx(["--version"], "", home, tmp_path)
         assert proc.returncode == 0
-        assert proc.stdout.strip() == "agenticx 1.0.1"
+        assert proc.stdout.strip() == "agenticx 1.0.2"

@@ -1,7 +1,7 @@
-# Migrating to DashScope AgenticX 1.0.1
+# Migrating to DashScope AgenticX 1.0.2
 
 This guide describes migration from legacy AgenticCLI versions to
-DashScope AgenticX `1.0.1`.
+DashScope AgenticX `1.0.2`.
 
 ## Current identities
 

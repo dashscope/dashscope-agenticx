@@ -1,6 +1,6 @@
 # DashScope AgenticX
 
-![DashScope AgenticX](logo.svg)
+![DashScope AgenticX](https://raw.githubusercontent.com/dashscope/dashscope-agenticx/main/logo.svg)
 
 [English](README.md) | [中文](README_zh.md)
 
@@ -264,8 +264,13 @@ tests alone does not publish or certify a final 1.0 release.
 
 ## Documentation
 
+The bilingual documentation site (English / 中文) is published at
+<https://dashscope.github.io/dashscope-agenticx/> — guides, configuration,
+CLI reference, and API reference. Source pages live under [`docs/`](docs/).
+
 | Document | Contents |
 |---|---|
+| [Documentation site](https://dashscope.github.io/dashscope-agenticx/) / [中文文档](https://dashscope.github.io/dashscope-agenticx/zh/) | Bilingual guides, configuration, CLI, and API reference |
 | [User guide](user-guide.md) / [中文手册](user-guide_zh.md) | Full commands, configuration, tools, modules, and development reference |
 | [Migration](migration-to-1.0.md) | Legacy naming, directories, credentials, and compatibility |
 | [Changelog](CHANGELOG.md) | 1.0 release notes, upcoming changes, and archived release history |

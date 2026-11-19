@@ -1,6 +1,6 @@
 # DashScope AgenticX
 
-![DashScope AgenticX](logo.svg)
+![DashScope AgenticX](https://raw.githubusercontent.com/dashscope/dashscope-agenticx/main/logo.svg)
 
 [English](README.md) | [中文](README_zh.md)
 
@@ -242,8 +242,13 @@ App 校验和供应链检查是独立发布要求；本地单测通过不等于�
 
 ## 文档
 
+双语文档站（English / 中文）发布于
+<https://dashscope.github.io/dashscope-agenticx/>，包含专题指南、配置、
+命令行参考与 API 参考。源码页面位于 [`docs/`](docs/)。
+
 | 文档 | 内容 |
 |---|---|
+| [文档站](https://dashscope.github.io/dashscope-agenticx/) / [English docs](https://dashscope.github.io/dashscope-agenticx/) | 双语指南、配置、命令行与 API 参考 |
 | [中文使用手册](user-guide_zh.md) / [English guide](user-guide.md) | 完整命令、配置、工具、模块和开发参考 |
 | [迁移指南](migration-to-1.0.md) | 旧命名、目录、凭据和兼容处理 |
 | [Changelog](CHANGELOG.md) | 1.0 发布说明、后续改动和归档的历史版本 |

@@ -15,6 +15,9 @@ repos:
       - id: check-ast
       - id: sort-simple-yaml
       - id: check-yaml
+        # mkdocs.yml uses !!python/name: tags for the Material emoji
+        # extension; the safe loader rejects them.
+        args: [--unsafe]
         exclude: |
           (?x)^(
               meta.yaml

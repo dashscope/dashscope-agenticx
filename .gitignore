@@ -34,6 +34,8 @@ Thumbs.db
 *.webm
 *.wav
 *.mp3
+# Docs site assets are intentional, not test artifacts
+!docs/assets/*.png
 
 # npm side products (agenticx isn't a Node project; ignore stray init artifacts)
 node_modules/
@@ -49,3 +51,7 @@ package-lock.json
 /md/
 /.aoneci/
 /.gitlab-ci.yml
+
+# MkDocs build output and local docs virtualenv
+/site
+.venv-docs/

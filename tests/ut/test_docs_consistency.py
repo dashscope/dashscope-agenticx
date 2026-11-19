@@ -121,7 +121,8 @@ class TestOnePointZeroReadmes:
     def test_readme_is_a_current_release_entrypoint(self, readme: Path):
         text = readme.read_text(encoding="utf-8")
         assert text.startswith("# DashScope AgenticX\n")
-        assert "![DashScope AgenticX](logo.svg)" in text
+        assert "![DashScope AgenticX](" in text
+        assert "dashscope-agenticx/main/logo.svg)" in text
         assert "AgenticX 1.0" in text
         assert 'python -m pip install "dashscope-agenticx[tui]"' in text
         assert "1.0.0rc3" not in text
