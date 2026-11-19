@@ -3,7 +3,7 @@
 [English](user-guide.md) | [中文](user-guide_zh.md) | [README](README_zh.md)
 
 本手册承接原 README 的详细配置、命令、工具与 Runtime 参考，面向
-DashScope AgenticX `1.0.1`。首次使用请先阅读
+DashScope AgenticX `1.0.2`。首次使用请先阅读
 [快速开始](README_zh.md#快速开始)，安装扩展前检查[安全策略](SECURITY.md)
 和[迁移指南](migration-to-1.0.md)。版本更新记录统一保留在
 [CHANGELOG.md](CHANGELOG.md)，不放入使用手册。

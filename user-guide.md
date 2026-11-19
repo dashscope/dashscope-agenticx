@@ -3,7 +3,7 @@
 [English](user-guide.md) | [中文](user-guide_zh.md) | [README](README.md)
 
 This document contains the detailed configuration, command, tool, and Runtime
-reference moved out of the README. It describes DashScope AgenticX `1.0.1`.
+reference moved out of the README. It describes DashScope AgenticX `1.0.2`.
 Start with the
 [quick start](README.md#quick-start), and review [security](SECURITY.md)
 and [migration](migration-to-1.0.md) before installing extensions. Historical

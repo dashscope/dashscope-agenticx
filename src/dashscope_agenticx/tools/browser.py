@@ -365,7 +365,7 @@ async def scrape_web(
     Args:
         url: The URL to scrape (http/https only).
         wait_selector: Optional CSS selector to wait for before extracting
-        content.
+            content.
         timeout: Max wait time in milliseconds (default 30s, max 120s).
     """
     try:
@@ -418,7 +418,7 @@ async def scrape_web_html(
     Args:
         url: The URL to scrape (http/https only).
         wait_selector: Optional CSS selector to wait for before extracting
-        HTML.
+            HTML.
         timeout: Max wait time in milliseconds (default 30s, max 120s).
     """
     try:
@@ -463,7 +463,7 @@ async def scrape_web_screenshot(
     Args:
         url: The URL to screenshot (http/https only).
         output_path: Where to save the screenshot image (must be within
-        current directory).
+            current directory).
         full_page: If True, capture the full scrollable page.
         wait_selector: Optional CSS selector to wait for before capturing.
         timeout: Max wait time in milliseconds (default 30s, max 120s).
